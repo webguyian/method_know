@@ -4,6 +4,7 @@ defmodule MethodKnow.Accounts.User do
 
   schema "users" do
     field :email, :string
+    field :name, :string
     field :password, :string, virtual: true, redact: true
     field :hashed_password, :string, redact: true
     field :confirmed_at, :utc_datetime
@@ -57,6 +58,40 @@ defmodule MethodKnow.Accounts.User do
   end
 
   @doc """
+  A user changeset for registration.
+
+  It validates email, name, and password. This changeset is used during
+  user registration to ensure all required fields are properly validated
+  and the password is securely hashed.
+
+  ## Options
+
+    * `:hash_password` - Hashes the password so it can be stored securely
+      in the database. Defaults to `true`.
+    * `:validate_unique` - Set to false if you don't want to validate the
+      uniqueness of the email. Defaults to `true`.
+  """
+  def registration_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:email, :name, :password])
+    |> validate_required([:name], message: "can't be blank")
+    |> validate_length(:name, min: 1, max: 160)
+    |> validate_email(opts)
+    |> validate_confirmation(:password, message: "does not match password")
+    |> validate_password(opts)
+  end
+
+  @doc """
+  A user changeset for changing the name.
+  """
+  def name_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:name])
+    |> validate_required([:name], message: "can't be blank")
+    |> validate_length(:name, min: 1, max: 160)
+  end
+
+  @doc """
   A user changeset for changing the password.
 
   It is important to validate the length of the password, as long passwords may
@@ -81,7 +116,7 @@ defmodule MethodKnow.Accounts.User do
   defp validate_password(changeset, opts) do
     changeset
     |> validate_required([:password])
-    |> validate_length(:password, min: 12, max: 72)
+    |> validate_length(:password, min: 8, max: 72)
     # Examples of additional password validation:
     # |> validate_format(:password, ~r/[a-z]/, message: "at least one lower case character")
     # |> validate_format(:password, ~r/[A-Z]/, message: "at least one upper case character")

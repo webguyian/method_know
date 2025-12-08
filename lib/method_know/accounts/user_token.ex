@@ -150,6 +150,33 @@ defmodule MethodKnow.Accounts.UserToken do
     end
   end
 
+  @doc """
+  Checks if the registration token is valid and returns its underlying lookup query.
+
+  The query returns a tuple of the form `{user, token}`.
+
+  The given token is valid if it matches its hashed counterpart in the
+  database and hasn't expired (5 minutes). This is used for auto-login
+  after registration.
+  """
+  def verify_registration_token_query(token) do
+    case Base.url_decode64(token, padding: false) do
+      {:ok, decoded_token} ->
+        hashed_token = :crypto.hash(@hash_algorithm, decoded_token)
+
+        query =
+          from token in by_token_and_context_query(hashed_token, "registration"),
+            join: user in assoc(token, :user),
+            where: token.inserted_at > ago(5, "minute"),
+            select: {user, token}
+
+        {:ok, query}
+
+      :error ->
+        :error
+    end
+  end
+
   defp by_token_and_context_query(token, context) do
     from UserToken, where: [token: ^token, context: ^context]
   end

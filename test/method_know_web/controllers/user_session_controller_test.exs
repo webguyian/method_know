@@ -2,7 +2,6 @@ defmodule MethodKnowWeb.UserSessionControllerTest do
   use MethodKnowWeb.ConnCase
 
   import MethodKnow.AccountsFixtures
-  alias MethodKnow.Accounts
 
   setup do
     %{unconfirmed_user: unconfirmed_user_fixture(), user: user_fixture()}
@@ -92,28 +91,19 @@ defmodule MethodKnowWeb.UserSessionControllerTest do
       assert response =~ ~p"/users/log-out"
     end
 
-    test "confirms unconfirmed user", %{conn: conn, unconfirmed_user: user} do
+    test "raises error for unconfirmed user with password", %{conn: conn, unconfirmed_user: user} do
+      # Since registration now requires passwords, all unconfirmed users have passwords
+      # and magic link login should raise an error for security reasons
       {token, _hashed_token} = generate_user_magic_link_token(user)
       refute user.confirmed_at
+      assert user.hashed_password
 
-      conn =
+      assert_raise RuntimeError, ~r/magic link log in is not allowed/, fn ->
         post(conn, ~p"/users/log-in", %{
           "user" => %{"token" => token},
           "_action" => "confirmed"
         })
-
-      assert get_session(conn, :user_token)
-      assert redirected_to(conn) == ~p"/"
-      assert Phoenix.Flash.get(conn.assigns.flash, :info) =~ "User confirmed successfully."
-
-      assert Accounts.get_user!(user.id).confirmed_at
-
-      # Now do a logged in request and assert on the menu
-      conn = get(conn, ~p"/")
-      response = html_response(conn, 200)
-      assert response =~ user.email
-      assert response =~ ~p"/users/settings"
-      assert response =~ ~p"/users/log-out"
+      end
     end
 
     test "redirects to login page when magic link is invalid", %{conn: conn} do

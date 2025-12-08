@@ -76,8 +76,24 @@ defmodule MethodKnow.Accounts do
   """
   def register_user(attrs) do
     %User{}
-    |> User.email_changeset(attrs)
+    |> User.registration_changeset(attrs)
+    |> User.confirm_changeset()
     |> Repo.insert()
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking user registration changes.
+
+  See `MethodKnow.Accounts.User.registration_changeset/3` for a list of supported options.
+
+  ## Examples
+
+      iex> change_user_registration(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_registration(user, attrs \\ %{}, opts \\ []) do
+    User.registration_changeset(user, attrs, opts)
   end
 
   ## Settings
@@ -109,6 +125,37 @@ defmodule MethodKnow.Accounts do
   """
   def change_user_email(user, attrs \\ %{}, opts \\ []) do
     User.email_changeset(user, attrs, opts)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user name.
+
+  ## Examples
+
+      iex> change_user_name(user)
+      %Ecto.Changeset{data: %User{}}
+
+  """
+  def change_user_name(user, attrs \\ %{}) do
+    User.name_changeset(user, attrs)
+  end
+
+  @doc """
+  Updates the user name.
+
+  ## Examples
+
+      iex> update_user_name(user, %{name: "New Name"})
+      {:ok, %User{}}
+
+      iex> update_user_name(user, %{name: ""})
+      {:error, %Ecto.Changeset{}}
+
+  """
+  def update_user_name(user, attrs) do
+    user
+    |> User.name_changeset(attrs)
+    |> Repo.update()
   end
 
   @doc """
@@ -176,6 +223,37 @@ defmodule MethodKnow.Accounts do
     {token, user_token} = UserToken.build_session_token(user)
     Repo.insert!(user_token)
     token
+  end
+
+  @doc """
+  Generates a short-lived, one-time token for auto-login after registration.
+
+  This token is hashed in the database and expires after 5 minutes.
+  It's more secure than passing session tokens in URLs because:
+  - It's single-use (deleted after first use)
+  - It has a short expiry time
+  - The actual token value is hashed in the database
+  """
+  def generate_registration_login_token(user) do
+    {encoded_token, user_token} = UserToken.build_email_token(user, "registration")
+    Repo.insert!(user_token)
+    {:ok, encoded_token}
+  end
+
+  @doc """
+  Logs in a user by registration token and deletes the token.
+
+  This is used for auto-login after registration. The token is single-use
+  and has a short expiry time (5 minutes).
+  """
+  def login_user_by_registration_token(token) do
+    with {:ok, query} <- UserToken.verify_registration_token_query(token),
+         {user, token_record} <- Repo.one(query) do
+      Repo.delete!(token_record)
+      {:ok, user}
+    else
+      _ -> {:error, :invalid_token}
+    end
   end
 
   @doc """

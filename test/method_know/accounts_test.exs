@@ -77,12 +77,13 @@ defmodule MethodKnow.AccountsTest do
       assert "has already been taken" in errors_on(changeset).email
     end
 
-    test "registers users without password" do
+    test "registers users with name, email and password, and auto-confirms them" do
       email = unique_user_email()
       {:ok, user} = Accounts.register_user(valid_user_attributes(email: email))
       assert user.email == email
-      assert is_nil(user.hashed_password)
-      assert is_nil(user.confirmed_at)
+      assert user.name == "Test User"
+      assert user.hashed_password
+      assert user.confirmed_at
       assert is_nil(user.password)
     end
   end
@@ -210,12 +211,12 @@ defmodule MethodKnow.AccountsTest do
     test "validates password", %{user: user} do
       {:error, changeset} =
         Accounts.update_user_password(user, %{
-          password: "not valid",
+          password: "short",
           password_confirmation: "another"
         })
 
       assert %{
-               password: ["should be at least 12 character(s)"],
+               password: ["should be at least 8 character(s)"],
                password_confirmation: ["does not match password"]
              } = errors_on(changeset)
     end
@@ -330,15 +331,16 @@ defmodule MethodKnow.AccountsTest do
   end
 
   describe "login_user_by_magic_link/1" do
-    test "confirms user and expires tokens" do
+    test "raises error for unconfirmed user with password" do
       user = unconfirmed_user_fixture()
       refute user.confirmed_at
-      {encoded_token, hashed_token} = generate_user_magic_link_token(user)
+      assert user.hashed_password  # Users now always have passwords
+      {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
 
-      assert {:ok, {user, [%{token: ^hashed_token}]}} =
-               Accounts.login_user_by_magic_link(encoded_token)
-
-      assert user.confirmed_at
+      # Magic link login should raise for unconfirmed users with passwords
+      assert_raise RuntimeError, ~r/magic link log in is not allowed/, fn ->
+        Accounts.login_user_by_magic_link(encoded_token)
+      end
     end
 
     test "returns user and (deleted) token for confirmed user" do
@@ -352,7 +354,7 @@ defmodule MethodKnow.AccountsTest do
 
     test "raises when unconfirmed user has password set" do
       user = unconfirmed_user_fixture()
-      {1, nil} = Repo.update_all(User, set: [hashed_password: "hashed"])
+      # Users now always have passwords, so this should always raise for unconfirmed users
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
 
       assert_raise RuntimeError, ~r/magic link log in is not allowed/, fn ->

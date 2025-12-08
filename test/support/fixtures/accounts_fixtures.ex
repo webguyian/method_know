@@ -14,11 +14,15 @@ defmodule MethodKnow.AccountsFixtures do
 
   def valid_user_attributes(attrs \\ %{}) do
     Enum.into(attrs, %{
-      email: unique_user_email()
+      email: unique_user_email(),
+      name: "Test User",
+      password: valid_user_password(),
+      password_confirmation: valid_user_password()
     })
   end
 
-  def unconfirmed_user_fixture(attrs \\ %{}) do
+  def user_fixture(attrs \\ %{}) do
+    # Users are now automatically confirmed upon registration
     {:ok, user} =
       attrs
       |> valid_user_attributes()
@@ -27,18 +31,14 @@ defmodule MethodKnow.AccountsFixtures do
     user
   end
 
-  def user_fixture(attrs \\ %{}) do
-    user = unconfirmed_user_fixture(attrs)
+  def unconfirmed_user_fixture(attrs \\ %{}) do
+    user = user_fixture(attrs)
 
-    token =
-      extract_user_token(fn url ->
-        Accounts.deliver_login_instructions(user, url)
-      end)
-
-    {:ok, {user, _expired_tokens}} =
-      Accounts.login_user_by_magic_link(token)
-
+    # For testing magic link functionality, we need to manually create unconfirmed users
+    # since registration now auto-confirms. We remove the confirmed_at timestamp.
     user
+    |> Ecto.Changeset.change(%{confirmed_at: nil})
+    |> MethodKnow.Repo.update!()
   end
 
   def user_scope_fixture do

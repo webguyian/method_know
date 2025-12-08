@@ -27,8 +27,8 @@ defmodule MethodKnowWeb.UserLive.RegistrationTest do
 
       result =
         lv
-        |> element("#registration_form")
-        |> render_change(user: %{"email" => "with spaces"})
+        |> form("#registration_form", user: %{"email" => "with spaces", "name" => "Test", "password" => "password123", "password_confirmation" => "password123"})
+        |> render_submit()
 
       assert result =~ "Register"
       assert result =~ "must have the @ sign and no spaces"
@@ -36,18 +36,23 @@ defmodule MethodKnowWeb.UserLive.RegistrationTest do
   end
 
   describe "register user" do
-    test "creates account but does not log in", %{conn: conn} do
+    test "creates account and logs the user in", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 
       email = unique_user_email()
       form = form(lv, "#registration_form", user: valid_user_attributes(email: email))
 
-      {:ok, _lv, html} =
-        render_submit(form)
-        |> follow_redirect(conn, ~p"/users/log-in")
+      # Submit the form
+      result = render_submit(form)
 
-      assert html =~
-               ~r/An email was sent to .*, please access it to confirm your account/
+      # Should redirect to registration confirmation endpoint with one-time token
+      assert {:error, {:live_redirect, %{to: redirect_to}}} = result
+      assert redirect_to =~ "/users/confirm-registration/"
+
+      # Verify user was created and confirmed
+      user = MethodKnow.Accounts.get_user_by_email(email)
+      assert user
+      assert user.confirmed_at
     end
 
     test "renders errors for duplicated email", %{conn: conn} do

@@ -59,6 +59,28 @@ defmodule MethodKnowWeb.UserSessionController do
     |> create(params, "Password updated successfully!")
   end
 
+  @doc """
+  Confirms registration and logs in the user using a one-time registration token.
+
+  This is more secure than passing session tokens in URLs because:
+  - The token is hashed in the database
+  - It's single-use (deleted after first use)
+  - It expires after 5 minutes
+  """
+  def confirm_registration(conn, %{"token" => token}) do
+    case Accounts.login_user_by_registration_token(token) do
+      {:ok, user} ->
+        conn
+        |> put_flash(:info, "Account created successfully!")
+        |> UserAuth.log_in_user(user)
+
+      {:error, :invalid_token} ->
+        conn
+        |> put_flash(:error, "Registration link is invalid or has expired.")
+        |> redirect(to: ~p"/users/register")
+    end
+  end
+
   def delete(conn, _params) do
     conn
     |> put_flash(:info, "Logged out successfully.")

@@ -70,6 +70,7 @@ defmodule MethodKnowWeb.Router do
     end
 
     post "/users/log-in", UserSessionController, :create
+    get "/users/confirm-registration/:token", UserSessionController, :confirm_registration
     delete "/users/log-out", UserSessionController, :delete
   end
 end

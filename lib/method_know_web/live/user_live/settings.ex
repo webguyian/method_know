@@ -29,6 +29,19 @@ defmodule MethodKnowWeb.UserLive.Settings do
 
       <div class="divider" />
 
+      <.form for={@name_form} id="name_form" phx-submit="update_name" phx-change="validate_name">
+        <.input
+          field={@name_form[:name]}
+          type="text"
+          label="Name"
+          autocomplete="name"
+          required
+        />
+        <.button variant="primary" phx-disable-with="Saving...">Save Name</.button>
+      </.form>
+
+      <div class="divider" />
+
       <.form
         for={@password_form}
         id="password_form"
@@ -83,12 +96,14 @@ defmodule MethodKnowWeb.UserLive.Settings do
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
     email_changeset = Accounts.change_user_email(user, %{}, validate_unique: false)
+    name_changeset = Accounts.change_user_name(user, %{})
     password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
 
     socket =
       socket
       |> assign(:current_email, user.email)
       |> assign(:email_form, to_form(email_changeset))
+      |> assign(:name_form, to_form(name_changeset))
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:trigger_submit, false)
 
@@ -126,6 +141,33 @@ defmodule MethodKnowWeb.UserLive.Settings do
 
       changeset ->
         {:noreply, assign(socket, :email_form, to_form(changeset, action: :insert))}
+    end
+  end
+
+  def handle_event("validate_name", params, socket) do
+    %{"user" => user_params} = params
+
+    name_form =
+      socket.assigns.current_scope.user
+      |> Accounts.change_user_name(user_params)
+      |> Map.put(:action, :validate)
+      |> to_form()
+
+    {:noreply, assign(socket, name_form: name_form)}
+  end
+
+  def handle_event("update_name", params, socket) do
+    %{"user" => user_params} = params
+    user = socket.assigns.current_scope.user
+    true = Accounts.sudo_mode?(user)
+
+    case Accounts.update_user_name(user, user_params) do
+      {:ok, _user} ->
+        info = "Name updated successfully."
+        {:noreply, socket |> put_flash(:info, info)}
+
+      {:error, changeset} ->
+        {:noreply, assign(socket, :name_form, to_form(changeset, action: :insert))}
     end
   end
 
