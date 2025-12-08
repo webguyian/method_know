@@ -54,6 +54,11 @@ defmodule MethodKnowWeb.Router do
       on_mount: [{MethodKnowWeb.UserAuth, :require_authenticated}] do
       live "/users/settings", UserLive.Settings, :edit
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
+
+      live "/resources", ResourceLive.Index, :index
+    live "/resources/new", ResourceLive.Form, :new
+    live "/resources/:id", ResourceLive.Show, :show
+    live "/resources/:id/edit", ResourceLive.Form, :edit
     end
 
     post "/users/update-password", UserSessionController, :update_password
