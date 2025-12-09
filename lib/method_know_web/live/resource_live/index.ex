@@ -8,42 +8,26 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.header>
-        Listing Resources
-        <:actions>
-          <.button variant="primary" navigate={~p"/resources/new"}>
-            <.icon name="hero-plus" /> New Resource
-          </.button>
-        </:actions>
+        Discover Resources
+        <:subtitle>Explore shared knowledge from our community</:subtitle>
       </.header>
 
-      <.table
-        id="resources"
-        rows={@streams.resources}
-        row_click={fn {_id, resource} -> JS.navigate(~p"/resources/#{resource}") end}
+      <div
+        id="resources-grid"
+        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 py-4"
+        phx-update="stream"
       >
-        <:col :let={{_id, resource}} label="Title">{resource.title}</:col>
-        <:col :let={{_id, resource}} label="Description">{resource.description}</:col>
-        <:col :let={{_id, resource}} label="Resource type">{resource.resource_type}</:col>
-        <:col :let={{_id, resource}} label="Tags">{resource.tags}</:col>
-        <:col :let={{_id, resource}} label="Author">{resource.author}</:col>
-        <:col :let={{_id, resource}} label="Code">{resource.code}</:col>
-        <:col :let={{_id, resource}} label="Language">{resource.language}</:col>
-        <:col :let={{_id, resource}} label="Url">{resource.url}</:col>
-        <:action :let={{_id, resource}}>
-          <div class="sr-only">
-            <.link navigate={~p"/resources/#{resource}"}>Show</.link>
-          </div>
-          <.link navigate={~p"/resources/#{resource}/edit"}>Edit</.link>
-        </:action>
-        <:action :let={{id, resource}}>
-          <.link
-            phx-click={JS.push("delete", value: %{id: resource.id}) |> hide("##{id}")}
-            data-confirm="Are you sure?"
-          >
-            Delete
-          </.link>
-        </:action>
-      </.table>
+        <%= for {id, resource} <- @streams.resources do %>
+          <.live_component
+            module={MethodKnowWeb.ResourceCardComponent}
+            id={id}
+            resource={resource}
+            current_user={@current_scope.user}
+            on_edit="edit"
+            on_delete="delete"
+          />
+        <% end %>
+      </div>
     </Layouts.app>
     """
   end
@@ -57,10 +41,14 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:ok,
      socket
      |> assign(:page_title, "Listing Resources")
-     |> stream(:resources, list_resources(socket.assigns.current_scope))}
+     |> stream(:resources, list_resources())}
   end
 
   @impl true
+  def handle_event("edit", %{"id" => id}, socket) do
+    {:noreply, push_navigate(socket, to: "/resources/#{id}/edit")}
+  end
+
   def handle_event("delete", %{"id" => id}, socket) do
     resource = Resources.get_resource!(socket.assigns.current_scope, id)
     {:ok, _} = Resources.delete_resource(socket.assigns.current_scope, resource)
@@ -71,10 +59,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   @impl true
   def handle_info({type, %MethodKnow.Resources.Resource{}}, socket)
       when type in [:created, :updated, :deleted] do
-    {:noreply, stream(socket, :resources, list_resources(socket.assigns.current_scope), reset: true)}
+    {:noreply, stream(socket, :resources, list_resources(), reset: true)}
   end
 
-  defp list_resources(current_scope) do
-    Resources.list_resources(current_scope)
+  defp list_resources do
+    Resources.list_all_resources()
   end
 end

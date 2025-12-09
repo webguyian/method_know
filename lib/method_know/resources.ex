@@ -32,6 +32,20 @@ defmodule MethodKnow.Resources do
   end
 
   @doc """
+  Returns all resources in the database, preloading the user association.
+
+  ## Examples
+
+      iex> list_all_resources()
+      [%Resource{}, ...]
+  """
+  def list_all_resources do
+    Resource
+    |> preload(:user)
+    |> Repo.all()
+  end
+
+  @doc """
   Returns the list of resources.
 
   ## Examples
@@ -41,7 +55,10 @@ defmodule MethodKnow.Resources do
 
   """
   def list_resources(%Scope{} = scope) do
-    Repo.all_by(Resource, user_id: scope.user.id)
+    Resource
+    |> where([r], r.user_id == ^scope.user.id)
+    |> preload(:user)
+    |> Repo.all()
   end
 
   @doc """

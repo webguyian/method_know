@@ -36,7 +36,7 @@ defmodule MethodKnowWeb.Layouts do
   def app(assigns) do
     ~H"""
     <main class="px-4 py-8 sm:px-6 lg:px-8">
-      <div class="mx-auto max-w-2xl space-y-4">
+      <div class="container mx-auto">
         {render_slot(@inner_block)}
       </div>
     </main>
@@ -132,45 +132,50 @@ defmodule MethodKnowWeb.Layouts do
     ~H"""
     <%= unless @hide_navbar do %>
       <nav class="navbar bg-base-100 px-4 sm:px-6 lg:px-8 shadow-sm border-b border-base-200">
-        <div class="flex-1">
-          <.link
-            navigate={~p"/"}
-            class="inline-flex items-center text-xl gap-2 text-base-content"
-          >
-            <div class="size-9 rounded-full bg-black text-white flex items-center justify-center">
-              <Lucide.book_marked class="size-5" />
-            </div>
-            <span class="font-semibold tracking-tight">Method Know</span>
-          </.link>
-        </div>
-        <div class="flex-none gap-2">
-          <%= if @current_scope do %>
-            <div class="dropdown dropdown-end">
-              <button type="button" class="btn btn-ghost gap-2 font-normal p-1">
-                <.avatar name={@current_scope.user.name} />
-              </button>
-              <ul class="mt-3 z-[1] p-2 shadow-lg shadow-base-content/5 menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
-                <li class="menu-title text-base-content/60 px-4 py-2 border-b border-base-content/10 mb-1">
-                  My Account
-                </li>
-                <li>
-                  <.link href={~p"/users/settings"} class="py-2 gap-2">
-                    <Lucide.settings_2 class="size-4" /> Settings
-                  </.link>
-                </li>
-                <li class="border-t border-base-content/10 mt-1 pt-1">
-                  <.link href={~p"/users/log-out"} method="delete" class="py-2 gap-2">
-                    <Lucide.log_out class="size-4" /> Log out
-                  </.link>
-                </li>
+        <div class="container mx-auto flex justify-between">
+          <div class="flex-1">
+            <.link
+              navigate={~p"/"}
+              class="inline-flex items-center text-xl gap-2 text-base-content"
+            >
+              <div class="size-9 rounded-full bg-black text-white flex items-center justify-center">
+                <Lucide.book_marked class="size-5" />
+              </div>
+              <span class="font-semibold tracking-tight">Method Know</span>
+            </.link>
+          </div>
+          <div class="flex gap-4">
+            <%= if @current_scope do %>
+              <.button variant="primary" navigate={~p"/resources/new"}>
+                Share Resource
+              </.button>
+              <div class="dropdown dropdown-end">
+                <button type="button" class="btn btn-ghost gap-2 font-normal p-1">
+                  <.avatar name={@current_scope.user.name} />
+                </button>
+                <ul class="mt-3 z-[1] p-2 shadow-lg shadow-base-content/5 menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
+                  <li class="menu-title text-base-content/60 px-4 py-2 border-b border-base-content/10 mb-1">
+                    My Account
+                  </li>
+                  <li>
+                    <.link href={~p"/users/settings"} class="py-2 gap-2">
+                      <Lucide.settings_2 class="size-4" /> Settings
+                    </.link>
+                  </li>
+                  <li class="border-t border-base-content/10 mt-1 pt-1">
+                    <.link href={~p"/users/log-out"} method="delete" class="py-2 gap-2">
+                      <Lucide.log_out class="size-4" /> Log out
+                    </.link>
+                  </li>
+                </ul>
+              </div>
+            <% else %>
+              <ul class="menu menu-horizontal px-1">
+                <li><.link navigate={~p"/users/register"}>Register</.link></li>
+                <li><.link navigate={~p"/users/log-in"}>Log in</.link></li>
               </ul>
-            </div>
-          <% else %>
-            <ul class="menu menu-horizontal px-1">
-              <li><.link navigate={~p"/users/register"}>Register</.link></li>
-              <li><.link navigate={~p"/users/log-in"}>Log in</.link></li>
-            </ul>
-          <% end %>
+            <% end %>
+          </div>
         </div>
       </nav>
     <% end %>

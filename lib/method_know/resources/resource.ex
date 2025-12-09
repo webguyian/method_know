@@ -25,7 +25,8 @@ defmodule MethodKnow.Resources.Resource do
     field :code, :string
     field :language, :string
     field :url, :string
-    field :user_id, :id
+
+    belongs_to :user, MethodKnow.Accounts.User
 
     timestamps(type: :utc_datetime)
   end
