@@ -8,66 +8,95 @@ defmodule MethodKnowWeb.UserLive.Registration do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="mx-auto max-w-sm">
-        <div class="text-center">
-          <.header>
-            Register for an account
-            <:subtitle>
-              Already registered?
-              <.link navigate={~p"/users/log-in"} class="font-semibold text-brand hover:underline">
-                Log in
-              </.link>
-              to your account now.
-            </:subtitle>
-          </.header>
+      <div class="flex min-h-full flex-col justify-center py-6 sm:px-6 lg:px-8">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
+          <div class="mx-auto size-16 rounded-full bg-black text-white flex items-center justify-center mb-4">
+            <Lucide.book_marked class="size-9" />
+          </div>
+          <h1 class="text-3xl font-semibold text-base-content leading-9">
+            Join Method Know
+          </h1>
+          <p class="mt-2 text-xl text-base-content/70 leading-7">
+            Share and discover valuable learning resources
+          </p>
         </div>
 
-        <.form for={@form} id="registration_form" phx-submit="save" phx-change="validate">
-          <.input
-            field={@form[:email]}
-            type="email"
-            label="Email"
-            autocomplete="username"
-            required
-            phx-mounted={JS.focus()}
-            phx-blur="touch_field"
-            phx-value-field="email"
-          />
+        <div class="sm:mx-auto sm:w-full sm:max-w-md">
+          <div class="bg-base-100 p-4 shadow-xl shadow-base-content/5 rounded-2xl border border-base-300">
+            <.form
+              for={@form}
+              id="registration_form"
+              phx-submit="save"
+              phx-change="validate"
+              class="space-y-3"
+            >
+              <h2 class="text-lg text-base-content leading-7">
+                Create Account
+              </h2>
 
-          <.input
-            field={@form[:name]}
-            type="text"
-            label="Name"
-            autocomplete="name"
-            required
-            phx-blur="touch_field"
-            phx-value-field="name"
-          />
+              <.input
+                field={@form[:name]}
+                type="text"
+                label="Full Name"
+                autocomplete="name"
+                required
+                phx-blur="touch_field"
+                phx-mounted={JS.focus()}
+                phx-value-field="name"
+                placeholder="Enter your full name"
+              />
 
-          <.input
-            field={@form[:password]}
-            type="password"
-            label="Password"
-            autocomplete="new-password"
-            required
-            phx-blur="touch_field"
-            phx-value-field="password"
-          />
+              <.input
+                field={@form[:email]}
+                type="email"
+                label="Email"
+                autocomplete="username"
+                required
+                phx-blur="touch_field"
+                phx-value-field="email"
+                placeholder="Enter your email"
+              />
 
-          <.input
-            field={@form[:password_confirmation]}
-            type="password"
-            label="Confirm password"
-            autocomplete="new-password"
-            required
-            phx-blur="touch_field"
-            phx-value-field="password_confirmation"
-          />
+              <.input
+                field={@form[:password]}
+                type="password"
+                label="Password"
+                autocomplete="new-password"
+                required
+                phx-blur="touch_field"
+                phx-value-field="password"
+                placeholder="Create a password (min. 8 characters)"
+              />
 
-          <.button phx-disable-with="Creating account..." class="btn btn-primary w-full">
-            Create an account
-          </.button>
-        </.form>
+              <.input
+                field={@form[:password_confirmation]}
+                type="password"
+                label="Confirm Password"
+                autocomplete="new-password"
+                required
+                phx-blur="touch_field"
+                phx-value-field="password_confirmation"
+                placeholder="Confirm your password"
+              />
+
+              <div class="pt-2">
+                <.button
+                  phx-disable-with="Signing Up..."
+                  class="btn btn-primary w-full text-sm"
+                >
+                  Sign Up
+                </.button>
+              </div>
+
+              <p class="text-sm text-base-content/70 text-center">
+                Already have an account?
+                <.link navigate={~p"/users/log-in"} class="text-primary underline underline-offset-3">
+                  Log in
+                </.link>
+              </p>
+            </.form>
+          </div>
+        </div>
       </div>
     </Layouts.app>
     """

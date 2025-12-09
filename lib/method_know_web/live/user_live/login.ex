@@ -1,92 +1,86 @@
 defmodule MethodKnowWeb.UserLive.Login do
   use MethodKnowWeb, :live_view
 
-  alias MethodKnow.Accounts
-
   @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <div class="mx-auto max-w-sm space-y-4">
-        <div class="text-center">
-          <.header>
-            <p>Log in</p>
-            <:subtitle>
-              <%= if @current_scope do %>
-                You need to reauthenticate to perform sensitive actions on your account.
-              <% else %>
-                Don't have an account? <.link
-                  navigate={~p"/users/register"}
-                  class="font-semibold text-brand hover:underline"
-                  phx-no-format
-                >Sign up</.link> for an account now.
-              <% end %>
-            </:subtitle>
-          </.header>
+      <div class="flex min-h-full flex-col justify-center py-6 sm:px-6 lg:px-8">
+        <div class="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
+          <div class="mx-auto size-16 rounded-full bg-black text-white flex items-center justify-center mb-4">
+            <Lucide.book_marked class="size-9" />
+          </div>
+          <h1 class="text-3xl font-semibold text-base-content leading-9">
+            <%= if @current_scope do %>
+              Verify your identity
+            <% else %>
+              Welcome Back
+            <% end %>
+          </h1>
+          <p class="mt-2 text-xl text-base-content/70 leading-7">
+            <%= if @current_scope do %>
+              You need to reauthenticate to perform sensitive actions.
+            <% else %>
+              Share and discover valuable learning resources
+            <% end %>
+          </p>
         </div>
 
-        <div :if={local_mail_adapter?()} class="alert alert-info">
-          <.icon name="hero-information-circle" class="size-6 shrink-0" />
-          <div>
-            <p>You are running the local mail adapter.</p>
-            <p>
-              To see sent emails, visit <.link href="/dev/mailbox" class="underline">the mailbox page</.link>.
-            </p>
+        <div class="sm:mx-auto sm:w-full sm:max-w-md">
+          <div class="bg-base-100 p-4 shadow-xl shadow-base-content/5 rounded-2xl border border-base-300">
+            <.form
+              :let={f}
+              for={@form}
+              id="login_form_password"
+              action={~p"/users/log-in"}
+              phx-submit="submit_password"
+              phx-trigger-action={@trigger_submit}
+              class="space-y-3"
+            >
+              <h2 class="text-lg text-base-content leading-7">
+                Log in
+              </h2>
+
+              <.input
+                readonly={!!@current_scope}
+                field={f[:email]}
+                type="email"
+                label="Email"
+                autocomplete="email"
+                required
+                phx-mounted={JS.focus()}
+                placeholder="Enter your email"
+              />
+              <.input
+                field={@form[:password]}
+                type="password"
+                label="Password"
+                autocomplete="current-password"
+                placeholder="Enter your password"
+              />
+
+              <div class="pt-2 space-y-2">
+                <.button
+                  class="btn btn-primary w-full text-sm"
+                  name={@form[:remember_me].name}
+                  value="false"
+                >
+                  Login
+                </.button>
+              </div>
+
+              <%= if !@current_scope do %>
+                <p class="text-sm text-base-content/70 text-center pt-2">
+                  Don't have an account? <.link
+                    navigate={~p"/users/register"}
+                    class="text-primary underline underline-offset-3"
+                    phx-no-format
+                  >Sign up</.link>
+                </p>
+              <% end %>
+            </.form>
           </div>
         </div>
-
-        <.form
-          :let={f}
-          for={@form}
-          id="login_form_magic"
-          action={~p"/users/log-in"}
-          phx-submit="submit_magic"
-        >
-          <.input
-            readonly={!!@current_scope}
-            field={f[:email]}
-            type="email"
-            label="Email"
-            autocomplete="email"
-            required
-            phx-mounted={JS.focus()}
-          />
-          <.button class="btn btn-primary w-full">
-            Log in with email <span aria-hidden="true">→</span>
-          </.button>
-        </.form>
-
-        <div class="divider">or</div>
-
-        <.form
-          :let={f}
-          for={@form}
-          id="login_form_password"
-          action={~p"/users/log-in"}
-          phx-submit="submit_password"
-          phx-trigger-action={@trigger_submit}
-        >
-          <.input
-            readonly={!!@current_scope}
-            field={f[:email]}
-            type="email"
-            label="Email"
-            autocomplete="email"
-            required
-          />
-          <.input
-            field={@form[:password]}
-            type="password"
-            label="Password"
-            autocomplete="current-password"
-          />
-          <.button class="btn btn-primary w-full" name={@form[:remember_me].name} value="true">
-            Log in and stay logged in <span aria-hidden="true">→</span>
-          </.button>
-          <.button class="btn btn-primary btn-soft w-full mt-2">
-            Log in only this time
-          </.button>
-        </.form>
       </div>
     </Layouts.app>
     """
@@ -106,26 +100,5 @@ defmodule MethodKnowWeb.UserLive.Login do
   @impl true
   def handle_event("submit_password", _params, socket) do
     {:noreply, assign(socket, :trigger_submit, true)}
-  end
-
-  def handle_event("submit_magic", %{"user" => %{"email" => email}}, socket) do
-    if user = Accounts.get_user_by_email(email) do
-      Accounts.deliver_login_instructions(
-        user,
-        &url(~p"/users/log-in/#{&1}")
-      )
-    end
-
-    info =
-      "If your email is in our system, you will receive instructions for logging in shortly."
-
-    {:noreply,
-     socket
-     |> put_flash(:info, info)
-     |> push_navigate(to: ~p"/users/log-in")}
-  end
-
-  defp local_mail_adapter? do
-    Application.get_env(:method_know, MethodKnow.Mailer)[:adapter] == Swoosh.Adapters.Local
   end
 end

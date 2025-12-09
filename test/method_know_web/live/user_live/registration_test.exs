@@ -8,8 +8,8 @@ defmodule MethodKnowWeb.UserLive.RegistrationTest do
     test "renders registration page", %{conn: conn} do
       {:ok, _lv, html} = live(conn, ~p"/users/register")
 
-      assert html =~ "Register"
-      assert html =~ "Log in"
+      assert html =~ "Join Method Know"
+      assert html =~ "Create Account"
     end
 
     test "redirects if already logged in", %{conn: conn} do
@@ -27,10 +27,17 @@ defmodule MethodKnowWeb.UserLive.RegistrationTest do
 
       result =
         lv
-        |> form("#registration_form", user: %{"email" => "with spaces", "name" => "Test", "password" => "password123", "password_confirmation" => "password123"})
+        |> form("#registration_form",
+          user: %{
+            "email" => "with spaces",
+            "name" => "Test",
+            "password" => "password123",
+            "password_confirmation" => "password123"
+          }
+        )
         |> render_submit()
 
-      assert result =~ "Register"
+      assert result =~ "Create Account"
       assert result =~ "must have the @ sign and no spaces"
     end
   end

@@ -1,7 +1,7 @@
 /* See the Tailwind configuration guide for advanced usage
    https://tailwindcss.com/docs/configuration */
-
-@import "tailwindcss" source(none);
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import 'tailwindcss';
 @source "../css";
 @source "../js";
 @source "../../lib/method_know_web";
@@ -22,10 +22,10 @@
   We ship with two themes, a light one inspired on Phoenix colors and a dark one inspired
   on Elixir colors. Build your own at: https://daisyui.com/theme-generator/ */
 @plugin "../vendor/daisyui-theme" {
-  name: "dark";
+  name: 'dark';
   default: false;
   prefersdark: true;
-  color-scheme: "dark";
+  color-scheme: 'dark';
   --color-base-100: oklch(30.33% 0.016 252.42);
   --color-base-200: oklch(25.26% 0.014 253.1);
   --color-base-300: oklch(20.15% 0.012 254.09);
@@ -57,14 +57,14 @@
 }
 
 @plugin "../vendor/daisyui-theme" {
-  name: "light";
+  name: 'light';
   default: true;
   prefersdark: false;
-  color-scheme: "light";
+  color-scheme: 'light';
   --color-base-100: oklch(98% 0 0);
   --color-base-200: oklch(96% 0.001 286.375);
   --color-base-300: oklch(92% 0.004 286.32);
-  --color-base-content: oklch(21% 0.006 285.885);
+  --color-base-content: oklch(0.21 0.04 266);
   --color-primary: oklch(0.21 0.04 266);
   --color-primary-content: oklch(98% 0.016 73.684);
   --color-secondary: oklch(55% 0.027 264.364);
@@ -100,6 +100,12 @@
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
 /* Make LiveView wrapper divs transparent for layout */
-[data-phx-session], [data-phx-teleported-src] { display: contents }
+[data-phx-session],
+[data-phx-teleported-src] {
+  display: contents;
+}
 
 /* This file is for your main application CSS */
+:root {
+  font-family: 'Inter', sans-serif;
+}
