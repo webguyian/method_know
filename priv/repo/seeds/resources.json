@@ -1,0 +1,186 @@
+[
+  {
+    "title": "React Server Components Deep Dive",
+    "description": "A comprehensive guide to understanding how RSCs work.",
+    "resource_type": "article",
+    "url": "https://react.dev/blog/2023/03/22/react-labs-what-we-have-been-working-on-march-2023#react-server-components",
+    "tags": ["react", "frontend", "architecture"]
+  },
+  {
+    "title": "A Complete Guide to useEffect",
+    "description": "Mastering the dependency array and cleanup functions.",
+    "resource_type": "article",
+    "url": "https://overreacted.io/a-complete-guide-to-useeffect/",
+    "tags": ["react", "hooks", "javascript"]
+  },
+  {
+    "title": "TypeScript Generics Explained",
+    "description": "How to make your components reusable with generics.",
+    "resource_type": "article",
+    "url": "https://www.typescriptlang.org/docs/handbook/2/generics.html",
+    "tags": ["typescript", "basics"]
+  },
+  {
+    "title": "What the heck is the event loop anyway?",
+    "description": "Philip Roberts' famous talk on the JS event loop.",
+    "resource_type": "article",
+    "url": "https://2014.jsconf.eu/speakers/philip-roberts-what-the-heck-is-the-event-loop-anyway.html",
+    "tags": ["javascript", "async", "performance"]
+  },
+  {
+    "title": "Phoenix LiveView vs React",
+    "description": "Comparing server-side state management vs client-side.",
+    "resource_type": "article",
+    "url": "https://fly.io/phoenix-files/phoenix-liveview-vs-react/",
+    "tags": ["elixir", "phoenix", "react"]
+  },
+  {
+    "title": "Understanding Ownership in Rust",
+    "description": "The unique feature that makes Rust memory safe without GC.",
+    "resource_type": "article",
+    "url": "https://doc.rust-lang.org/book/ch04-00-understanding-ownership.html",
+    "tags": ["rust", "memory", "systems"]
+  },
+  {
+    "title": "Goroutines: Concurrency in Go",
+    "description": "Lightweight threads managed by the Go runtime.",
+    "resource_type": "article",
+    "url": "https://gobyexample.com/goroutines",
+    "tags": ["go", "concurrency", "backend"]
+  },
+  {
+    "title": "A Complete Guide to CSS Grid",
+    "description": "CSS-Tricks guide to all grid properties.",
+    "resource_type": "article",
+    "url": "https://css-tricks.com/snippets/css/complete-guide-grid/",
+    "tags": ["css", "design", "layout"]
+  },
+  {
+    "title": "Debounce Function",
+    "description": "Limit the rate at which a function can fire.",
+    "resource_type": "code_snippet",
+    "language": "javascript",
+    "code": "function debounce(func, wait) {\n  let timeout;\n  return function executedFunction(...args) {\n    const later = () => {\n      clearTimeout(timeout);\n      func(...args);\n    };\n    clearTimeout(timeout);\n    timeout = setTimeout(later, wait);\n  };\n}",
+    "tags": ["javascript", "utility", "performance"]
+  },
+  {
+    "title": "useLocalStorage Hook",
+    "description": "Persist state to local storage.",
+    "resource_type": "code_snippet",
+    "language": "javascript",
+    "code": "import { useState, useEffect } from 'react';\n\nfunction useLocalStorage(key, initialValue) {\n  const [storedValue, setStoredValue] = useState(() => {\n    try {\n      const item = window.localStorage.getItem(key);\n      return item ? JSON.parse(item) : initialValue;\n    } catch (error) {\n      return initialValue;\n    }\n  });\n\n  const setValue = (value) => {\n    try {\n      const valueToStore = value instanceof Function ? value(storedValue) : value;\n      setStoredValue(valueToStore);\n      window.localStorage.setItem(key, JSON.stringify(valueToStore));\n    } catch (error) {\n      console.log(error);\n    }\n  };\n\n  return [storedValue, setValue];\n}",
+    "tags": ["react", "hooks", "storage"]
+  },
+  {
+    "title": "Rust Hello World",
+    "description": "Standard entry point.",
+    "resource_type": "code_snippet",
+    "language": "rust",
+    "code": "fn main() {\n    println!(\"Hello, world!\");\n}",
+    "tags": ["rust", "basics"]
+  },
+  {
+    "title": "Go HTTP Server",
+    "description": "Simple web server in Golang.",
+    "resource_type": "code_snippet",
+    "language": "go",
+    "code": "package main\n\nimport (\n    \"fmt\"\n    \"net/http\"\n)\n\nfunc hello(w http.ResponseWriter, req *http.Request) {\n    fmt.Fprintf(w, \"hello\\n\")\n}\n\nfunc main() {\n    http.HandleFunc(\"/hello\", hello)\n    http.ListenAndServe(\":8090\", nil)\n}",
+    "tags": ["go", "web", "server"]
+  },
+  {
+    "title": "Elixir Pattern Matching",
+    "description": "Destructuring a map.",
+    "resource_type": "code_snippet",
+    "language": "elixir",
+    "code": "{:ok, result} = {:ok, 42}\n%User{name: name} = user",
+    "tags": ["elixir", "basics"]
+  },
+  {
+    "title": "Python List Comprehension",
+    "description": "Concise way to create lists.",
+    "resource_type": "code_snippet",
+    "language": "python",
+    "code": "squares = [x**2 for x in range(10)]",
+    "tags": ["python", "basics"]
+  },
+  {
+    "title": "CSS Flexbox Perfect Center",
+    "description": "Centering an element vertically and horizontally.",
+    "resource_type": "code_snippet",
+    "language": "css",
+    "code": ".parent {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n}",
+    "tags": ["css", "layout"]
+  },
+  {
+    "title": "TypeScript MutableKeys",
+    "description": "Utility type helper.",
+    "resource_type": "code_snippet",
+    "language": "typescript",
+    "code": "type MutableKeys<T> = {\n  [P in keyof T]-?: IfEquals<{ [Q in P]: T[P] }, { -readonly [Q in P]: T[P] }, P>;\n}[keyof T];",
+    "tags": ["typescript", "advanced"]
+  },
+  {
+    "title": "You Don't Know JS",
+    "description": "Deep dive into the core mechanisms of the JavaScript language.",
+    "resource_type": "learning_resource",
+    "author": "Kyle Simpson",
+    "url": "https://github.com/getify/You-Dont-Know-JS",
+    "tags": ["javascript", "book", "advanced"]
+  },
+  {
+    "title": "Eloquent JavaScript",
+    "description": "A modern introduction to programming.",
+    "resource_type": "learning_resource",
+    "author": "Marijn Haverbeke",
+    "url": "https://eloquentjavascript.net/",
+    "tags": ["javascript", "book", "beginner"]
+  },
+  {
+    "title": "Total TypeScript",
+    "description": "The most comprehensive TypeScript course.",
+    "resource_type": "learning_resource",
+    "author": "Matt Pocock",
+    "url": "https://www.totaltypescript.com/",
+    "tags": ["typescript", "course"]
+  },
+  {
+    "title": "Epic React",
+    "description": "Advanced React patterns and practices.",
+    "resource_type": "learning_resource",
+    "author": "Kent C. Dodds",
+    "url": "https://epicreact.dev/",
+    "tags": ["react", "course", "advanced"]
+  },
+  {
+    "title": "The Rust Programming Language",
+    "description": "The official book on Rust.",
+    "resource_type": "learning_resource",
+    "author": "Steve Klabnik and Carol Nichols",
+    "url": "https://doc.rust-lang.org/book/",
+    "tags": ["rust", "book", "official"]
+  },
+  {
+    "title": "Programming Phoenix LiveView",
+    "description": "Interactive Elixir Web Programming Without Writing Custom JavaScript.",
+    "resource_type": "learning_resource",
+    "author": "Bruce Tate and Sophie DeBenedetto",
+    "url": "https://pragprog.com/titles/liveview/programming-phoenix-liveview/",
+    "tags": ["elixir", "phoenix", "book"]
+  },
+  {
+    "title": "Go by Example",
+    "description": "Hands-on introduction to Go using annotated example programs.",
+    "resource_type": "learning_resource",
+    "author": "Mark McGranaghan",
+    "url": "https://gobyexample.com/",
+    "tags": ["go", "examples"]
+  },
+  {
+    "title": "Just JavaScript",
+    "description": "Rebuild your mental model of JavaScript.",
+    "resource_type": "learning_resource",
+    "author": "Dan Abramov",
+    "url": "https://justjavascript.com/",
+    "tags": ["javascript", "course", "mental-models"]
+  }
+]
