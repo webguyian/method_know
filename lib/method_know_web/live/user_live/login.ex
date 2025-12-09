@@ -94,7 +94,7 @@ defmodule MethodKnowWeb.UserLive.Login do
 
     form = to_form(%{"email" => email}, as: "user")
 
-    {:ok, assign(socket, form: form, trigger_submit: false)}
+    {:ok, assign(socket, form: form, trigger_submit: false, hide_navbar: true)}
   end
 
   @impl true

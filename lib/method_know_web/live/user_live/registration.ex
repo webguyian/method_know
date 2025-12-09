@@ -114,6 +114,7 @@ defmodule MethodKnowWeb.UserLive.Registration do
     {:ok,
      socket
      |> assign(touched_fields: MapSet.new())
+     |> assign(hide_navbar: true)
      |> assign_form(changeset)}
   end
 

@@ -14,6 +14,9 @@ defmodule MethodKnowWeb.UserLive.Settings do
           Account Settings
           <:subtitle>Manage your account email address and password settings</:subtitle>
         </.header>
+        <div class="flex justify-end">
+          <Layouts.theme_toggle />
+        </div>
       </div>
 
       <.form for={@email_form} id="email_form" phx-submit="update_email" phx-change="validate_email">
