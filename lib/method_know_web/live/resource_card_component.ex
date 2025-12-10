@@ -66,27 +66,6 @@ defmodule MethodKnowWeb.ResourceCardComponent do
     """
   end
 
-  attr :name, :string, default: "User"
-  attr :class, :string, default: nil
-
-  def avatar(assigns) do
-    ~H"""
-    <div class={["flex items-center gap-2", @class]}>
-      <Lucide.circle_user class="size-7 text-base-content/70" />
-      <span class="hidden sm:inline-block font-normal">{get_first_name(@name)}</span>
-    </div>
-    """
-  end
-
-  defp get_first_name(nil), do: "User"
-
-  defp get_first_name(name) do
-    name
-    |> to_string()
-    |> String.split(" ")
-    |> List.first()
-  end
-
   defp truncate_description(desc) when is_binary(desc) do
     if String.length(desc) > 250 do
       String.slice(desc, 0, 247) <> "..."

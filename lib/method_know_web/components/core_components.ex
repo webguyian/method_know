@@ -316,16 +316,129 @@ defmodule MethodKnowWeb.CoreComponents do
     ~H"""
     <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4"]}>
       <div>
-        <h1 class="text-lg font-semibold leading-8">
+        <h1 class="text-3xl font-semibold text-base-content leading-9">
           {render_slot(@inner_block)}
         </h1>
-        <p :if={@subtitle != []} class="text-sm text-base-content/70">
+        <p :if={@subtitle != []} class="text-xl text-base-content/70">
           {render_slot(@subtitle)}
         </p>
       </div>
       <div class="flex-none">{render_slot(@actions)}</div>
     </header>
     """
+  end
+
+  attr :current_scope, :map, default: nil
+  attr :hide_navbar, :boolean, default: false
+  slot :inner_block
+
+  def navbar(assigns) do
+    ~H"""
+    <%= unless @hide_navbar do %>
+      <nav class="navbar bg-base-100 px-4 sm:px-6 lg:px-8 shadow-sm border-b border-base-200">
+        <div class="container mx-auto flex justify-between">
+          <div class="flex-1">
+            <.link
+              navigate="/"
+              class="inline-flex items-center text-xl gap-2 text-base-content"
+            >
+              <div class="size-9 rounded-full bg-black text-white flex items-center justify-center">
+                <Lucide.book_marked class="size-5" />
+              </div>
+              <span class="font-semibold tracking-tight">Method Know</span>
+            </.link>
+          </div>
+          <div class="flex gap-4 items-center">
+            <%= if @current_scope && @current_scope.user do %>
+              <div id="navbar-actions">{render_slot(@inner_block)}</div>
+              <div class="dropdown dropdown-end">
+                <button type="button" class="btn btn-ghost gap-2 font-normal p-1">
+                  <.avatar name={@current_scope.user && @current_scope.user.name} />
+                </button>
+                <ul class="mt-3 z-[1] p-2 shadow-lg shadow-base-content/5 menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
+                  <li class="menu-title text-base-content/60 px-4 py-2 border-b border-base-content/10 mb-1">
+                    My Account
+                  </li>
+                  <li>
+                    <.link href="/users/settings" class="py-2 gap-2">
+                      <Lucide.settings_2 class="size-4" /> Settings
+                    </.link>
+                  </li>
+                  <li class="border-t border-base-content/10 mt-1 pt-1">
+                    <.link href="/users/log-out" method="delete" class="py-2 gap-2">
+                      <Lucide.log_out class="size-4" /> Log out
+                    </.link>
+                  </li>
+                </ul>
+              </div>
+            <% else %>
+              <ul class="menu menu-horizontal px-1">
+                <li><.link navigate="/users/register">Register</.link></li>
+                <li><.link navigate="/users/log-in">Log in</.link></li>
+              </ul>
+            <% end %>
+          </div>
+        </div>
+      </nav>
+    <% end %>
+    """
+  end
+
+  @doc """
+  Renders dynamic navbar actions into the #navbar-actions div.
+
+  Usage:
+    <.navbar_actions current_scope={@current_scope}>
+      ...actions...
+    </.navbar_actions>
+  """
+  attr :current_scope, :map, default: nil
+  slot :inner_block, required: true
+
+  def navbar_actions(assigns) do
+    ~H"""
+    <div id="navbar-actions-temp" phx-hook=".NavbarActions" class="hidden">
+      {render_slot(@inner_block)}
+    </div>
+    <script :type={Phoenix.LiveView.ColocatedHook} name=".NavbarActions">
+      export default {
+        mounted() {
+          this.moveActions();
+        },
+        updated() {
+          this.moveActions();
+        },
+        moveActions() {
+          const temp = this.el;
+          const navbarActions = document.getElementById("navbar-actions");
+          if (navbarActions && temp) {
+            navbarActions.innerHTML = temp.innerHTML;
+          }
+        }
+      }
+    </script>
+    """
+  end
+
+  attr :name, :string, default: "User"
+  attr :class, :string, default: nil
+
+  def avatar(assigns) do
+    ~H"""
+    <div class={["flex items-center gap-2", @class]}>
+      <Lucide.circle_user class="size-7 text-base-content/70" />
+      <span class="hidden sm:inline-block font-normal">{get_first_name(@name)}</span>
+    </div>
+    """
+  end
+
+  defp get_first_name(nil), do: "User"
+
+  defp get_first_name(name) do
+    name
+    |> to_string()
+    |> String.split(" ")
+    |> List.first()
   end
 
   @doc """
