@@ -39,6 +39,9 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           current_scope={@current_scope}
           return_to={~p"/resources"}
           on_close="hide_form"
+          all_tags={@all_tags}
+          tags={@tags}
+          tag_input={@tag_input}
         />
       <% end %>
     </Layouts.app>
@@ -51,9 +54,19 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       Resources.subscribe_resources(socket.assigns.current_scope)
     end
 
+    all_tags = [
+      "book",
+      "course",
+      "frontend",
+      "backend"
+    ]
+
     {:ok,
      socket
      |> assign(:page_title, "Discover Resources")
+     |> assign(:all_tags, all_tags)
+     |> assign(:tags, [])
+     |> assign(:tag_input, "")
      |> assign(:show_form, false)
      |> stream(:resources, list_resources())}
   end

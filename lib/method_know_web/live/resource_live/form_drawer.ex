@@ -23,9 +23,10 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
         phx-click={@on_close}
         phx-target={@myself}
         phx-stop-propagation
+        phx-window-keyup="esc_close"
       >
       </div>
-      <div class="relative my-auto ml-auto mr-10 h-[78%] w-full max-w-md bg-white rounded-xl shadow-xl flex flex-col animate-slide-in-right">
+      <div class="relative my-auto ml-auto mr-10 h-[85%] translate-y-6 w-full max-w-md bg-white rounded-xl shadow-xl flex flex-col animate-slide-in-right">
         <div class="flex items-start justify-between px-6 py-4 border-b border-slate-100">
           <div>
             <h2 class="text-xl font-semibold text-slate-900">Share a resource</h2>
@@ -50,6 +51,9 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
             form={@form}
             on_close={@on_close}
             myself={@myself}
+            all_tags={@all_tags}
+            tags={@tags}
+            tag_input={@tag_input}
           />
         </div>
       </div>
@@ -59,6 +63,15 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
 
   def handle_event("hide_form", _params, socket) do
     send(self(), :close_drawer)
+    {:noreply, socket}
+  end
+
+  def handle_event("esc_close", %{"key" => "Escape"}, socket) do
+    send(self(), :close_drawer)
+    {:noreply, socket}
+  end
+
+  def handle_event("esc_close", _params, socket) do
     {:noreply, socket}
   end
 

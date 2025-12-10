@@ -2,6 +2,19 @@ defmodule MethodKnowWeb.ResourceLive.FormComponent do
   use MethodKnowWeb, :live_component
   alias MethodKnow.Resources.Resource
 
+  @type_article "article"
+  @type_code_snippet "code_snippet"
+  @type_learning_resource "learning_resource"
+
+  @impl true
+  def mount(socket) do
+    {:ok,
+     socket
+     |> assign(:type_article, @type_article)
+     |> assign(:type_code_snippet, @type_code_snippet)
+     |> assign(:type_learning_resource, @type_learning_resource)}
+  end
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -21,17 +34,21 @@ defmodule MethodKnowWeb.ResourceLive.FormComponent do
           label="Resource type"
           options={Resource.resource_types()}
         />
-        <%= if @form[:resource_type].value in ["article", "learning_resource"] do %>
+        <%= if @form[:resource_type].value != @type_code_snippet do %>
           <.input field={@form[:url]} type="url" label="URL" />
-        <% end %>
-        <%= if @form[:resource_type].value == "learning_resource" do %>
           <.input field={@form[:author]} type="text" label="Author" />
         <% end %>
-        <%= if @form[:resource_type].value == "code_snippet" do %>
+        <%= if @form[:resource_type].value == @type_code_snippet do %>
           <.input field={@form[:code]} type="textarea" label="Code" />
           <.input field={@form[:language]} type="text" label="Language" />
         <% end %>
-        <.input field={@form[:tags]} type="textarea" label="Tags" />
+        <.live_component
+          module={MethodKnowWeb.TagFilterComponent}
+          id="tag-filter"
+          all_tags={@all_tags}
+          tags={@tags}
+          tag_input={@tag_input}
+        />
         <div class="flex justify-end gap-2 mt-8">
           <.button phx-disable-with="Saving..." variant="primary">Share</.button>
           <.button type="button" phx-click={@on_close} phx-target={@myself}>
