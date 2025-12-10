@@ -19,8 +19,6 @@ defmodule MethodKnowWeb.Router do
 
   scope "/", MethodKnowWeb do
     pipe_through :browser
-
-    get "/", PageController, :home
   end
 
   # Other scopes may use custom stacks.
@@ -56,9 +54,9 @@ defmodule MethodKnowWeb.Router do
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
 
       live "/resources", ResourceLive.Index, :index
-    live "/resources/new", ResourceLive.Form, :new
-    live "/resources/:id", ResourceLive.Show, :show
-    live "/resources/:id/edit", ResourceLive.Form, :edit
+      live "/resources/new", ResourceLive.Form, :new
+      live "/resources/:id", ResourceLive.Show, :show
+      live "/resources/:id/edit", ResourceLive.Form, :edit
     end
 
     post "/users/update-password", UserSessionController, :update_password
@@ -69,6 +67,7 @@ defmodule MethodKnowWeb.Router do
 
     live_session :current_user,
       on_mount: [{MethodKnowWeb.UserAuth, :mount_current_scope}] do
+      live "/", ResourceLive.Index, :index
       live "/users/register", UserLive.Registration, :new
       live "/users/log-in", UserLive.Login, :new
       live "/users/log-in/:token", UserLive.Confirmation, :new

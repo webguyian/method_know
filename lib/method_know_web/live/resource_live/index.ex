@@ -53,7 +53,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
     {:ok,
      socket
-     |> assign(:page_title, "Listing Resources")
+     |> assign(:page_title, "Discover Resources")
      |> assign(:show_form, false)
      |> stream(:resources, list_resources())}
   end
