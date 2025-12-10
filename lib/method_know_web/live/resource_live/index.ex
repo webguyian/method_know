@@ -111,6 +111,14 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply, assign(socket, :show_form, false)}
   end
 
+  def handle_info({:resource_saved, :created}, socket) do
+    {:noreply, put_flash(socket, :success, "Resource created successfully")}
+  end
+
+  def handle_info({:resource_saved, :updated}, socket) do
+    {:noreply, put_flash(socket, :success, "Resource updated successfully")}
+  end
+
   def handle_info({:tags_updated, tags}, socket) do
     {:noreply, assign(socket, tags: tags)}
   end
