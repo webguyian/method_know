@@ -11,7 +11,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         <.button variant="primary" phx-click="show_form">Share Resource</.button>
       </.navbar_actions>
       <.header>
-        Discover Resources
+        {@page_title}
         <:subtitle>Explore shared knowledge from our community</:subtitle>
       </.header>
 
@@ -37,6 +37,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           module={MethodKnowWeb.ResourceLive.FormDrawer}
           id="resource-form-drawer"
           current_scope={@current_scope}
+          title={@form_title}
+          resource={@resource}
           return_to={~p"/resources"}
           on_close="hide_form"
           all_tags={@all_tags}
@@ -68,17 +70,28 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> assign(:tags, [])
      |> assign(:tag_input, "")
      |> assign(:show_form, false)
+     |> assign(:resource, nil)
      |> stream(:resources, list_resources())}
   end
 
   @impl true
   def handle_event("show_form", _params, socket) do
-    {:noreply, assign(socket, :show_form, true)}
+    {:noreply,
+     socket
+     |> assign(:form_title, "Share a resource")
+     |> assign(:show_form, true)}
   end
 
   @impl true
   def handle_event("edit", %{"id" => id}, socket) do
-    {:noreply, push_navigate(socket, to: "/resources/#{id}/edit")}
+    resource = Resources.get_resource!(socket.assigns.current_scope, id)
+
+    {:noreply,
+     socket
+     |> assign(:resource, resource)
+     |> assign(:form_title, "Edit resource")
+     |> assign(:tags, resource.tags || [])
+     |> assign(:show_form, true)}
   end
 
   def handle_event("delete", %{"id" => id}, socket) do
@@ -96,6 +109,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   def handle_info(:close_drawer, socket) do
     {:noreply, assign(socket, :show_form, false)}
+  end
+
+  def handle_info({:tags_updated, tags}, socket) do
+    {:noreply, assign(socket, tags: tags)}
   end
 
   defp list_resources do

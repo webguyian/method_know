@@ -161,4 +161,24 @@ defmodule MethodKnow.Resources do
 
     Resource.changeset(resource, attrs, scope)
   end
+
+  @doc """
+  Creates or updates a resource depending on whether an id is present in attrs.
+
+  ## Examples
+
+      iex> create_or_update_resource(scope, %{id: 123, field: value})
+      {:ok, %Resource{}}
+
+      iex> create_or_update_resource(scope, %{field: value})
+      {:ok, %Resource{}}
+  """
+  def create_or_update_resource(%Scope{} = scope, attrs) do
+    if Map.get(attrs, "id") do
+      resource = get_resource!(scope, attrs["id"])
+      update_resource(scope, resource, attrs)
+    else
+      create_resource(scope, attrs)
+    end
+  end
 end

@@ -18,10 +18,11 @@ defmodule MethodKnowWeb.ResourceLive.FormComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div>
+    <div class="flex flex-col justify-start h-full">
       <.form
         for={@form}
         id="resource-form"
+        class="flex flex-col justify-start h-full"
         phx-change="validate"
         phx-submit="save"
         phx-target={@myself}
@@ -49,9 +50,13 @@ defmodule MethodKnowWeb.ResourceLive.FormComponent do
           tags={@tags}
           tag_input={@tag_input}
         />
-        <div class="flex justify-end gap-2 mt-8">
-          <.button phx-disable-with="Saving..." variant="primary">Share</.button>
-          <.button type="button" phx-click={@on_close} phx-target={@myself}>
+        <%= if @form[:id].value do %>
+          <input type="hidden" name="resource[id]" value={@form[:id].value} />
+        <% end %>
+        <input type="hidden" name="resource[tags]" value={Enum.join(@tags, ",")} />
+        <div class="flex flex-row-reverse justify-end gap-2 mt-auto">
+          <.button class="w-1/2" phx-disable-with="Saving..." variant="primary">Share</.button>
+          <.button class="w-1/2" type="button" phx-click={@on_close} phx-target={@myself}>
             Cancel
           </.button>
         </div>

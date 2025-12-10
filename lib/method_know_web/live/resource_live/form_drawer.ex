@@ -5,7 +5,8 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
 
   @impl true
   def update(assigns, socket) do
-    changeset = Resources.change_resource(assigns.current_scope, %Resource{})
+    resource = assigns[:resource] || %Resource{}
+    changeset = Resources.change_resource(assigns.current_scope, resource)
 
     {:ok,
      socket
@@ -26,25 +27,26 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
         phx-window-keyup="esc_close"
       >
       </div>
-      <div class="relative my-auto ml-auto mr-10 h-[85%] translate-y-6 w-full max-w-md bg-white rounded-xl shadow-xl flex flex-col animate-slide-in-right">
-        <div class="flex items-start justify-between px-6 py-4 border-b border-slate-100">
-          <div>
-            <h2 class="text-xl font-semibold text-slate-900">Share a resource</h2>
+      <div class="relative my-auto ml-auto mr-10 h-[85%] translate-y-6 w-full max-w-[490px] bg-white rounded-xl shadow-xl flex flex-col animate-slide-in-right">
+        <div class="flex items-start justify-between px-6 pt-4">
+          <header>
+            <h2 class="text-xl font-semibold text-slate-900">{@title}</h2>
             <p class="text-slate-500 text-sm">
               Contribute to the knowledge base by sharing valuable content
             </p>
-          </div>
+          </header>
           <button
             type="button"
             class="icon-btn"
             aria-label="Close"
             phx-click={@on_close}
             phx-target={@myself}
+            phx-mounted={JS.focus()}
           >
             <Lucide.x class="size-6 text-slate-400 hover:text-slate-700" />
           </button>
         </div>
-        <div class="flex-1 overflow-y-auto px-6 py-4">
+        <div class="flex-1 overflow-visible px-6 py-4">
           <.live_component
             module={MethodKnowWeb.ResourceLive.FormComponent}
             id="resource-form-component"
@@ -88,9 +90,11 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   def handle_event("save", %{"resource" => resource_params}, socket) do
     resource_params = normalize_tags(resource_params)
 
-    case Resources.create_resource(socket.assigns.current_scope, resource_params) do
+    case Resources.create_or_update_resource(socket.assigns.current_scope, resource_params) do
       {:ok, _resource} ->
-        send(self(), {:resource_created})
+        action = if resource_params["id"], do: :updated, else: :created
+        send(self(), {:resource_saved, action})
+        send(self(), :close_drawer)
         {:noreply, socket}
 
       {:error, %Ecto.Changeset{} = changeset} ->
