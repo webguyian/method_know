@@ -157,7 +157,7 @@ defmodule MethodKnow.Resources do
 
   """
   def change_resource(%Scope{} = scope, %Resource{} = resource, attrs \\ %{}) do
-    true = resource.user_id == scope.user.id
+    # true = resource.user_id == scope.user.id
 
     Resource.changeset(resource, attrs, scope)
   end

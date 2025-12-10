@@ -7,6 +7,9 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
+      <.navbar_actions current_scope={@current_scope}>
+        <.button variant="primary" phx-click="show_form">Share Resource</.button>
+      </.navbar_actions>
       <.header>
         Discover Resources
         <:subtitle>Explore shared knowledge from our community</:subtitle>
@@ -22,12 +25,22 @@ defmodule MethodKnowWeb.ResourceLive.Index do
             module={MethodKnowWeb.ResourceCardComponent}
             id={id}
             resource={resource}
-            current_user={@current_scope.user}
+            current_user={@current_scope && @current_scope.user}
             on_edit="edit"
             on_delete="delete"
           />
         <% end %>
       </div>
+
+      <%= if @show_form do %>
+        <.live_component
+          module={MethodKnowWeb.ResourceLive.FormDrawer}
+          id="resource-form-drawer"
+          current_scope={@current_scope}
+          return_to={~p"/resources"}
+          on_close="hide_form"
+        />
+      <% end %>
     </Layouts.app>
     """
   end
@@ -41,7 +54,13 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:ok,
      socket
      |> assign(:page_title, "Listing Resources")
+     |> assign(:show_form, false)
      |> stream(:resources, list_resources())}
+  end
+
+  @impl true
+  def handle_event("show_form", _params, socket) do
+    {:noreply, assign(socket, :show_form, true)}
   end
 
   @impl true
@@ -60,6 +79,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def handle_info({type, %MethodKnow.Resources.Resource{}}, socket)
       when type in [:created, :updated, :deleted] do
     {:noreply, stream(socket, :resources, list_resources(), reset: true)}
+  end
+
+  def handle_info(:close_drawer, socket) do
+    {:noreply, assign(socket, :show_form, false)}
   end
 
   defp list_resources do

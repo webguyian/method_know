@@ -12,27 +12,12 @@ defmodule MethodKnowWeb.ResourceLive.Form do
         {@page_title}
         <:subtitle>Use this form to manage resource records in your database.</:subtitle>
       </.header>
-
-      <.form for={@form} id="resource-form" phx-change="validate" phx-submit="save">
-        <.input field={@form[:title]} type="text" label="Title" />
-        <.input field={@form[:description]} type="textarea" label="Description" />
-        <.input field={@form[:resource_type]} type="select" label="Resource type" options={Resource.resource_types()} />
-    <%= if @form[:resource_type].value in ["article", "learning_resource"] do %>
-          <.input field={@form[:url]} type="url" label="URL" />
-        <% end %>
-    <%= if @form[:resource_type].value == "learning_resource" do %>
-          <.input field={@form[:author]} type="text" label="Author" />
-        <% end %>
-    <%= if @form[:resource_type].value == "code_snippet" do %>
-          <.input field={@form[:code]} type="textarea" label="Code" />
-          <.input field={@form[:language]} type="text" label="Language" />
-        <% end %>
-        <.input field={@form[:tags]} type="textarea" label="Tags" />
-        <footer>
-          <.button phx-disable-with="Saving..." variant="primary">Save Resource</.button>
-          <.button navigate={return_path(@current_scope, @return_to, @resource)}>Cancel</.button>
-        </footer>
-      </.form>
+      <.live_component
+        module={MethodKnowWeb.ResourceLive.FormComponent}
+        id="resource-form-component"
+        form={@form}
+        on_close="hide_form"
+      />
     </Layouts.app>
     """
   end
@@ -69,7 +54,14 @@ defmodule MethodKnowWeb.ResourceLive.Form do
   @impl true
   def handle_event("validate", %{"resource" => resource_params}, socket) do
     resource_params = normalize_tags(resource_params)
-    changeset = Resources.change_resource(socket.assigns.current_scope, socket.assigns.resource, resource_params)
+
+    changeset =
+      Resources.change_resource(
+        socket.assigns.current_scope,
+        socket.assigns.resource,
+        resource_params
+      )
+
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
@@ -79,7 +71,11 @@ defmodule MethodKnowWeb.ResourceLive.Form do
   end
 
   defp save_resource(socket, :edit, resource_params) do
-    case Resources.update_resource(socket.assigns.current_scope, socket.assigns.resource, resource_params) do
+    case Resources.update_resource(
+           socket.assigns.current_scope,
+           socket.assigns.resource,
+           resource_params
+         ) do
       {:ok, resource} ->
         {:noreply,
          socket
