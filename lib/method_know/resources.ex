@@ -181,4 +181,35 @@ defmodule MethodKnow.Resources do
       create_resource(scope, attrs)
     end
   end
+
+  def list_all_tags do
+    # Use a subquery to flatten all tags from all resources
+    sql = """
+    SELECT DISTINCT value
+    FROM resources, json_each(tags)
+    WHERE json_type(tags, '$') = 'array'
+    ORDER BY value
+    """
+
+    try do
+      result = Repo.query!(sql)
+      Enum.map(result.rows, fn [tag] -> tag end)
+    rescue
+      _ ->
+        [
+          "advanced",
+          "architecture",
+          "backend",
+          "basics",
+          "book",
+          "course",
+          "design",
+          "frontend",
+          "performance",
+          "storage",
+          "systems",
+          "web"
+        ]
+    end
+  end
 end

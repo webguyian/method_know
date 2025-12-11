@@ -53,12 +53,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       Resources.subscribe_resources(socket.assigns.current_scope)
     end
 
-    all_tags = [
-      "book",
-      "course",
-      "frontend",
-      "backend"
-    ]
+    all_tags = Resources.list_all_tags()
 
     {:ok,
      socket
@@ -76,7 +71,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply,
      socket
      |> assign(:form_title, "Share a resource")
-     |> assign(:show_form, true)}
+     |> assign(:show_form, true)
+     |> assign(:tags, [])}
   end
 
   @impl true
@@ -109,18 +105,27 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   end
 
   def handle_info({:resource_saved, :created}, socket) do
-    {:noreply, put_flash(socket, :success, "Resource created successfully")}
+    {:noreply, show_toast(socket, "Resource created successfully")}
   end
 
   def handle_info({:resource_saved, :updated}, socket) do
-    {:noreply, put_flash(socket, :success, "Resource updated successfully")}
+    {:noreply, show_toast(socket, "Resource updated successfully")}
   end
 
   def handle_info({:tags_updated, tags}, socket) do
     {:noreply, assign(socket, tags: tags)}
   end
 
+  def handle_info(:clear_flash, socket) do
+    {:noreply, clear_flash(socket)}
+  end
+
   defp list_resources do
     Resources.list_all_resources()
+  end
+
+  defp show_toast(socket, message, kind \\ :success, timeout \\ 4000) do
+    Process.send_after(self(), :clear_flash, timeout)
+    put_flash(socket, kind, message)
   end
 end
