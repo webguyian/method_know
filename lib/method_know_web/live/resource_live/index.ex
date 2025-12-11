@@ -7,9 +7,6 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <.navbar_actions current_scope={@current_scope}>
-        <.button variant="primary" phx-click="show_form">Share Resource</.button>
-      </.navbar_actions>
       <.header>
         {@page_title}
         <:subtitle>Explore shared knowledge from our community</:subtitle>

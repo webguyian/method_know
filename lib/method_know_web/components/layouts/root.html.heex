@@ -36,9 +36,7 @@
     </script>
   </head>
   <body>
-    <.navbar current_scope={@current_scope} hide_navbar={assigns[:hide_navbar]}>
-      <.button variant="primary">Share Resource</.button>
-    </.navbar>
+    <.navbar current_scope={@current_scope} hide_navbar={assigns[:hide_navbar]} hide_navbar_action={assigns[:hide_navbar_action]} />
     {@inner_content}
   </body>
 </html>
