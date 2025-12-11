@@ -1,18 +1,15 @@
 defmodule MethodKnowWeb.ResourceLive.FormComponent do
   use MethodKnowWeb, :live_component
-  alias MethodKnow.Resources.Resource
 
-  @type_article "article"
-  @type_code_snippet "code_snippet"
-  @type_learning_resource "learning_resource"
+  alias MethodKnow.Resources
 
   @impl true
   def mount(socket) do
     {:ok,
      socket
-     |> assign(:type_article, @type_article)
-     |> assign(:type_code_snippet, @type_code_snippet)
-     |> assign(:type_learning_resource, @type_learning_resource)}
+     |> assign(:type_article, Resources.type_article())
+     |> assign(:type_code_snippet, Resources.type_code_snippet())
+     |> assign(:type_learning_resource, Resources.type_learning_resource())}
   end
 
   @impl true
@@ -33,7 +30,7 @@ defmodule MethodKnowWeb.ResourceLive.FormComponent do
           field={@form[:resource_type]}
           type="select"
           label="Resource type"
-          options={Resource.resource_types()}
+          options={Resources.resource_types_with_labels()}
         />
         <%= if @form[:resource_type].value != @type_code_snippet do %>
           <.input field={@form[:url]} type="url" label="URL" />

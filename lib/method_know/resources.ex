@@ -9,6 +9,23 @@ defmodule MethodKnow.Resources do
   alias MethodKnow.Resources.Resource
   alias MethodKnow.Accounts.Scope
 
+  @type_article "article"
+  @type_code_snippet "code_snippet"
+  @type_learning_resource "learning_resource"
+
+  def type_article, do: @type_article
+  def type_code_snippet, do: @type_code_snippet
+  def type_learning_resource, do: @type_learning_resource
+  def resource_types, do: [@type_article, @type_code_snippet, @type_learning_resource]
+
+  def resource_types_with_labels do
+    [
+      {"Article", @type_article},
+      {"Code Snippet", @type_code_snippet},
+      {"Learning Resource", @type_learning_resource}
+    ]
+  end
+
   @doc """
   Subscribes to scoped notifications about any resource changes.
 
