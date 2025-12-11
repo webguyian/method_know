@@ -1,6 +1,8 @@
 defmodule MethodKnowWeb.ResourceCardComponent do
   use MethodKnowWeb, :live_component
 
+  alias MethodKnow.Resources
+
   @doc """
   Renders a resource card.
   Expects assigns:
@@ -13,12 +15,11 @@ defmodule MethodKnowWeb.ResourceCardComponent do
     ~H"""
     <div
       class="bg-white min-h-70 rounded-xl shadow-md flex flex-col overflow-hidden border border-slate-200 group hover:shadow-lg transition-shadow duration-150"
-      id={"resource-card-#{@resource.id}"}
+      id={"resources-#{@resource.id}"}
     >
       <div class="flex items-center justify-between px-4 pt-4 pb-2">
-        <span class="badge badge-sm bg-slate-100 text-slate-900 font-medium px-2 py-1 rounded">
-          {@resource.resource_type}
-        </span>
+        <.resource_type_badge type={@resource.resource_type} />
+
         <div class="flex gap-2">
           <%= if @current_user && @resource.user_id == @current_user.id do %>
             <button
@@ -54,7 +55,9 @@ defmodule MethodKnowWeb.ResourceCardComponent do
         <% end %>
         <div class="mt-auto flex flex-wrap gap-1 mb-2">
           <%= for tag <- (@resource.tags || []) do %>
-            <span class="badge badge-xs bg-slate-50 text-slate-700 px-2 py-0.5 rounded">{tag}</span>
+            <span class="badge badge-xs border-neutral-300 bg-transparent text-slate-700 p-2 rounded-full">
+              {tag}
+            </span>
           <% end %>
         </div>
       </div>
@@ -63,6 +66,29 @@ defmodule MethodKnowWeb.ResourceCardComponent do
         <span class="text-xs text-slate-500">{relative_date(@resource.inserted_at)}</span>
       </footer>
     </div>
+    """
+  end
+
+  # Resource type badge component
+  attr :type, :string, required: true
+
+  def resource_type_badge(assigns) do
+    [article, code_snippet, learning_resource] = Resources.resource_types()
+
+    {icon_name, label} =
+      case assigns.type do
+        ^article -> {"book_open", "Article"}
+        ^code_snippet -> {"code_2", "Code Snippet"}
+        ^learning_resource -> {"graduation_cap", "Learning Resource"}
+        _ -> {"help_circle", String.capitalize(to_string(assigns.type))}
+      end
+
+    assigns = assign(assigns, icon_name: icon_name, label: label)
+
+    ~H"""
+    <span class="badge badge-sm bg-slate-100 text-slate-900 font-medium px-2 py-1 rounded-full inline-flex items-center">
+      <Lucide.render icon={@icon_name} class="size-4 mr-1" />{@label}
+    </span>
     """
   end
 
