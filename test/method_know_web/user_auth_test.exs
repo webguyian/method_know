@@ -1,12 +1,12 @@
 defmodule MethodKnowWeb.UserAuthTest do
   use MethodKnowWeb.ConnCase
 
+  import MethodKnow.AccountsFixtures
+
   alias Phoenix.LiveView
   alias MethodKnow.Accounts
   alias MethodKnow.Accounts.Scope
   alias MethodKnowWeb.UserAuth
-
-  import MethodKnow.AccountsFixtures
 
   @remember_me_cookie "_method_know_web_user_remember_me"
   @remember_me_cookie_max_age 60 * 60 * 24 * 14

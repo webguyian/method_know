@@ -1,5 +1,6 @@
 defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   use MethodKnowWeb, :live_component
+
   alias MethodKnow.Resources
   alias MethodKnow.Resources.Resource
 

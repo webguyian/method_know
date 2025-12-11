@@ -11,6 +11,8 @@
 # and so on) as they will fail if something goes wrong.
 
 alias MethodKnow.Accounts
+alias MethodKnow.Accounts.Scope
+alias MethodKnow.Resources
 
 users = [
   {"John Smith", "john.smith@example.com"},
@@ -49,9 +51,6 @@ for {name, email} <- users do
       IO.puts("User already exists: #{name} (#{email})")
   end
 end
-
-alias MethodKnow.Resources
-alias MethodKnow.Accounts.Scope
 
 IO.puts("Seeding resources...")
 

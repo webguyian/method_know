@@ -1,9 +1,9 @@
 defmodule MethodKnow.AccountsTest do
   use MethodKnow.DataCase
 
-  alias MethodKnow.Accounts
-
   import MethodKnow.AccountsFixtures
+
+  alias MethodKnow.Accounts
   alias MethodKnow.Accounts.{User, UserToken}
 
   describe "get_user_by_email/1" do
@@ -334,7 +334,8 @@ defmodule MethodKnow.AccountsTest do
     test "raises error for unconfirmed user with password" do
       user = unconfirmed_user_fixture()
       refute user.confirmed_at
-      assert user.hashed_password  # Users now always have passwords
+      # Users now always have passwords
+      assert user.hashed_password
       {encoded_token, _hashed_token} = generate_user_magic_link_token(user)
 
       # Magic link login should raise for unconfirmed users with passwords

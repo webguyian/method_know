@@ -1,9 +1,10 @@
 defmodule MethodKnowWeb.UserLive.SettingsTest do
   use MethodKnowWeb.ConnCase
 
-  alias MethodKnow.Accounts
   import Phoenix.LiveViewTest
   import MethodKnow.AccountsFixtures
+
+  alias MethodKnow.Accounts
 
   describe "Settings page" do
     test "renders settings page", %{conn: conn} do
