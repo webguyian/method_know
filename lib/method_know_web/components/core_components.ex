@@ -98,10 +98,16 @@ defmodule MethodKnowWeb.CoreComponents do
   def button(%{rest: rest} = assigns) do
     variants = %{"primary" => "btn-primary", nil => "btn-primary btn-soft"}
 
-    assigns =
-      assign_new(assigns, :class, fn ->
-        ["btn", Map.fetch!(variants, assigns[:variant])]
-      end)
+    default_classes = ["btn", Map.fetch!(variants, assigns[:variant])]
+
+    merged_class =
+      case assigns[:class] do
+        nil -> default_classes
+        custom when is_list(custom) -> default_classes ++ custom
+        custom when is_binary(custom) -> default_classes ++ [custom]
+      end
+
+    assigns = assign(assigns, :class, merged_class)
 
     if rest[:href] || rest[:navigate] || rest[:patch] do
       ~H"""
