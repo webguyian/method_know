@@ -11,7 +11,11 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <.header>
         {@page_title}
-        <:subtitle>Explore shared knowledge from our community</:subtitle>
+        <:subtitle>
+          <%= if @live_action != :my do %>
+            Explore shared knowledge from our community
+          <% end %>
+        </:subtitle>
       </.header>
 
       <.search_form search={@search} />
@@ -87,10 +91,12 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       Resources.subscribe_resources(current_scope)
     end
 
+    my_resources? = socket.assigns.live_action == :my
+
     {:ok,
      socket
      |> assign(
-       page_title: "Discover Resources",
+       page_title: if(my_resources?, do: "Your resources", else: "Discover Resources"),
        all_tags: Resources.list_all_tags(),
        resource_types: Resources.resource_types_with_labels(),
        selected_types: [],
@@ -101,7 +107,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        search: "",
        resource: nil
      )
-     |> stream(:resources, list_resources())}
+     |> stream(:resources, get_resources(socket.assigns))}
   end
 
   @impl true
@@ -125,7 +131,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   def handle_event("filter_reset", _params, socket) do
     selected_tags = selected_types = []
-    resources = list_resources(selected_types, selected_tags)
+    resources = get_resources(socket.assigns, selected_types, selected_tags)
 
     {:noreply,
      socket
@@ -142,7 +148,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         [tag | socket.assigns.selected_tags]
       end
 
-    resources = list_resources(socket.assigns.selected_types, selected_tags)
+    resources = get_resources(socket.assigns, socket.assigns.selected_types, selected_tags)
 
     {:noreply,
      socket
@@ -158,7 +164,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         _ -> []
       end
 
-    resources = list_resources(selected_types, socket.assigns.selected_tags)
+    resources = get_resources(socket.assigns, selected_types, socket.assigns.selected_tags)
 
     {:noreply,
      socket
@@ -168,7 +174,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   def handle_event("filter_type", %{"_target" => ["resource_type"]}, socket) do
     selected_types = []
-    resources = list_resources(selected_types, socket.assigns.selected_tags)
+    resources = get_resources(socket.assigns, selected_types, socket.assigns.selected_tags)
 
     {:noreply,
      socket
@@ -180,7 +186,12 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     search = String.trim(search || "")
 
     resources =
-      list_resources(socket.assigns.selected_types, socket.assigns.selected_tags, search)
+      get_resources(
+        socket.assigns,
+        socket.assigns.selected_types,
+        socket.assigns.selected_tags,
+        search
+      )
 
     {:noreply,
      socket
@@ -199,7 +210,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   @impl true
   def handle_info({type, %MethodKnow.Resources.Resource{}}, socket)
       when type in [:created, :updated, :deleted] do
-    {:noreply, stream(socket, :resources, list_resources(), reset: true)}
+    {:noreply, stream(socket, :resources, get_resources(socket.assigns), reset: true)}
   end
 
   def handle_info(:close_drawer, socket) do
@@ -236,8 +247,30 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply, clear_flash(socket)}
   end
 
-  defp list_resources(selected_types \\ [], selected_tags \\ [], search \\ "") do
+  defp get_resources(assigns, selected_types \\ [], selected_tags \\ [], search \\ "") do
+    my_resources? = assigns.live_action == :my
+    current_scope = assigns.current_scope
+
+    cond do
+      my_resources? and current_scope ->
+        list_resources(current_scope, selected_types, selected_tags, search)
+
+      true ->
+        list_all_resources(selected_types, selected_tags, search)
+    end
+  end
+
+  defp list_all_resources(selected_types, selected_tags, search) do
     Resources.list_all_resources()
+    |> Enum.filter(
+      &(type_match(&1, selected_types) and
+          tag_match(&1, selected_tags) and
+          search_match(&1, search))
+    )
+  end
+
+  defp list_resources(current_scope, selected_types, selected_tags, search) do
+    Resources.list_resources(current_scope)
     |> Enum.filter(
       &(type_match(&1, selected_types) and
           tag_match(&1, selected_tags) and

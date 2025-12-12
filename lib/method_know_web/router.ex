@@ -54,6 +54,7 @@ defmodule MethodKnowWeb.Router do
       live "/users/settings/confirm-email/:token", UserLive.Settings, :confirm_email
 
       live "/resources", ResourceLive.Index, :index
+      live "/my/resources", ResourceLive.Index, :my
       live "/resources/new", ResourceLive.Form, :new
       live "/resources/:id", ResourceLive.Show, :show
       live "/resources/:id/edit", ResourceLive.Form, :edit

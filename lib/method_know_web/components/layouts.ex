@@ -150,17 +150,24 @@ defmodule MethodKnowWeb.Layouts do
           <div class="flex gap-4 items-center">
             <%= if @current_scope && @current_scope.user do %>
               <%= unless @hide_navbar_action do %>
-                <.button variant="primary" phx-click="show_form">Share Resource</.button>
+                <.button class="lg:px-10 lg:py-2" variant="primary" phx-click="show_form">
+                  Share Resource
+                </.button>
               <% else %>
                 <Layouts.theme_toggle />
               <% end %>
               <div class="dropdown dropdown-end">
-                <button type="button" class="btn btn-ghost gap-2 font-normal p-1">
+                <button type="button" class="btn btn-ghost gap-2 font-normal p-2">
                   <.avatar name={@current_scope.user && @current_scope.user.name} />
                 </button>
                 <ul class="mt-3 z-[1] p-2 shadow-lg shadow-base-content/5 menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
                   <li class="menu-title text-base-content/60 px-4 py-2 border-b border-base-content/10 mb-1">
                     My Account
+                  </li>
+                  <li>
+                    <.link href="/my/resources" class="py-2 gap-2">
+                      <Lucide.bookmark class="size-4" /> Your Shared Resources
+                    </.link>
                   </li>
                   <li>
                     <.link href="/users/settings" class="py-2 gap-2">

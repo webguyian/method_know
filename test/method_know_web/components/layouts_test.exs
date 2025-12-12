@@ -3,6 +3,7 @@ defmodule MethodKnowWeb.LayoutsTest do
   import Phoenix.LiveViewTest
   import Phoenix.Component
   import MethodKnowWeb.CoreComponents
+  import MethodKnowWeb.Layouts
 
   test "navbar renders logo and login link when not authenticated" do
     assigns = %{current_scope: nil, hide_navbar: false}
