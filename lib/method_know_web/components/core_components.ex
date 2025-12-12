@@ -322,9 +322,9 @@ defmodule MethodKnowWeb.CoreComponents do
 
   def header(assigns) do
     ~H"""
-    <header class={[@actions != [] && "flex items-center justify-between gap-6", "pb-4 mb-2"]}>
+    <header class={[@actions != [] && "flex items-center justify-between gap-6 pb-4", "pb-4"]}>
       <div>
-        <h1 class="text-3xl font-semibold text-base-content leading-9">
+        <h1 class="text-3xl font-semibold text-base-content mb-2 leading-9">
           {render_slot(@inner_block)}
         </h1>
         <p :if={@subtitle != []} class="text-xl text-base-content/70">

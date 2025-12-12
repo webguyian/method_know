@@ -14,6 +14,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         <:subtitle>Explore shared knowledge from our community</:subtitle>
       </.header>
 
+      <.search_form search={@search} />
+
       <div class="grid grid-cols-5 gap-8 py-4 items-start">
         <.filter_panel
           resource_types={@resource_types}
@@ -58,33 +60,48 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     """
   end
 
+  # Search form component
+  attr :search, :string, default: ""
+
+  def search_form(assigns) do
+    ~H"""
+    <form phx-change="search" class="w-full relative">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+        <Lucide.search class="size-5" />
+      </span>
+      <.input
+        name="search"
+        value={@search || ""}
+        type="text"
+        placeholder="Search resource by title or description..."
+        class="w-full text-base pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        autocomplete="off"
+      />
+    </form>
+    """
+  end
+
   @impl true
-  def mount(_params, _session, socket) do
-    if connected?(socket) do
-      Resources.subscribe_resources(socket.assigns.current_scope)
+  def mount(_params, _session, %{assigns: %{current_scope: current_scope}} = socket) do
+    if connected?(socket) and current_scope do
+      Resources.subscribe_resources(current_scope)
     end
 
     {:ok,
      socket
-     |> assign(:page_title, "Discover Resources")
-     |> assign(:all_tags, Resources.list_all_tags())
-     |> assign(:resource_types, Resources.resource_types_with_labels())
-     |> assign(:selected_types, [])
-     |> assign(:selected_tags, [])
-     |> assign(:tags, [])
-     |> assign(:tag_input, "")
-     |> assign(:show_form, false)
-     |> assign(:resource, nil)
+     |> assign(
+       page_title: "Discover Resources",
+       all_tags: Resources.list_all_tags(),
+       resource_types: Resources.resource_types_with_labels(),
+       selected_types: [],
+       selected_tags: [],
+       tags: [],
+       tag_input: "",
+       show_form: false,
+       search: "",
+       resource: nil
+     )
      |> stream(:resources, list_resources())}
-  end
-
-  @impl true
-  def handle_event("show_form", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(:form_title, "Share a resource")
-     |> assign(:show_form, true)
-     |> assign(:tags, [])}
   end
 
   @impl true
@@ -97,6 +114,40 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> assign(:form_title, "Edit resource")
      |> assign(:tags, resource.tags || [])
      |> assign(:show_form, true)}
+  end
+
+  def handle_event("delete", %{"id" => id}, socket) do
+    resource = Resources.get_resource!(socket.assigns.current_scope, id)
+    {:ok, _} = Resources.delete_resource(socket.assigns.current_scope, resource)
+
+    {:noreply, stream_delete(socket, :resources, resource)}
+  end
+
+  def handle_event("filter_reset", _params, socket) do
+    selected_tags = selected_types = []
+    resources = list_resources(selected_types, selected_tags)
+
+    {:noreply,
+     socket
+     |> assign(:selected_tags, selected_tags)
+     |> assign(:selected_types, selected_types)
+     |> stream(:resources, resources, reset: true)}
+  end
+
+  def handle_event("filter_tag", %{"tag" => tag}, socket) do
+    selected_tags =
+      if tag in socket.assigns.selected_tags do
+        List.delete(socket.assigns.selected_tags, tag)
+      else
+        [tag | socket.assigns.selected_tags]
+      end
+
+    resources = list_resources(socket.assigns.selected_types, selected_tags)
+
+    {:noreply,
+     socket
+     |> assign(:selected_tags, selected_tags)
+     |> stream(:resources, resources, reset: true)}
   end
 
   def handle_event("filter_type", %{"resource_type" => types}, socket) do
@@ -125,38 +176,24 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> stream(:resources, resources, reset: true)}
   end
 
-  def handle_event("filter_tag", %{"tag" => tag}, socket) do
-    selected_tags =
-      if tag in socket.assigns.selected_tags do
-        List.delete(socket.assigns.selected_tags, tag)
-      else
-        [tag | socket.assigns.selected_tags]
-      end
+  def handle_event("search", %{"search" => search}, socket) do
+    search = String.trim(search || "")
 
-    resources = list_resources(socket.assigns.selected_types, selected_tags)
+    resources =
+      list_resources(socket.assigns.selected_types, socket.assigns.selected_tags, search)
 
     {:noreply,
      socket
-     |> assign(:selected_tags, selected_tags)
+     |> assign(:search, search)
      |> stream(:resources, resources, reset: true)}
   end
 
-  def handle_event("reset_filters", _params, socket) do
-    selected_tags = selected_types = []
-    resources = list_resources(selected_types, selected_tags)
-
+  def handle_event("show_form", _params, socket) do
     {:noreply,
      socket
-     |> assign(:selected_tags, selected_tags)
-     |> assign(:selected_types, selected_types)
-     |> stream(:resources, resources, reset: true)}
-  end
-
-  def handle_event("delete", %{"id" => id}, socket) do
-    resource = Resources.get_resource!(socket.assigns.current_scope, id)
-    {:ok, _} = Resources.delete_resource(socket.assigns.current_scope, resource)
-
-    {:noreply, stream_delete(socket, :resources, resource)}
+     |> assign(:form_title, "Share a resource")
+     |> assign(:show_form, true)
+     |> assign(:tags, [])}
   end
 
   @impl true
@@ -199,24 +236,37 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply, clear_flash(socket)}
   end
 
-  defp list_resources(selected_types \\ [], selected_tags \\ []) do
+  defp list_resources(selected_types \\ [], selected_tags \\ [], search \\ "") do
     Resources.list_all_resources()
-    |> Enum.filter(fn resource ->
-      cond do
-        selected_types == [] and selected_tags == [] ->
-          true
+    |> Enum.filter(
+      &(type_match(&1, selected_types) and
+          tag_match(&1, selected_tags) and
+          search_match(&1, search))
+    )
+  end
 
-        selected_types == [] ->
-          Enum.any?(selected_tags, &(&1 in (resource.tags || [])))
+  defp type_match(_resource, []), do: true
+  defp type_match(resource, selected_types), do: resource.resource_type in selected_types
 
-        selected_tags == [] ->
-          resource.resource_type in selected_types
+  defp tag_match(_resource, []), do: true
 
-        true ->
-          resource.resource_type in selected_types and
-            Enum.any?(selected_tags, &(&1 in (resource.tags || [])))
-      end
-    end)
+  defp tag_match(resource, selected_tags),
+    do: Enum.any?(selected_tags, &(&1 in (resource.tags || [])))
+
+  defp search_match(_resource, ""), do: true
+
+  defp search_match(resource, search) do
+    search = String.downcase(search)
+
+    search_field(resource.title, search) or
+      search_field(resource.description, search)
+  end
+
+  defp search_field(field, search) do
+    field
+    |> Kernel.||("")
+    |> String.downcase()
+    |> String.contains?(search)
   end
 
   defp show_toast(socket, message, kind \\ :success, timeout \\ 4000) do
