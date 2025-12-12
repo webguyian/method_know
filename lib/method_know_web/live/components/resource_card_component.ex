@@ -2,6 +2,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
   use MethodKnowWeb, :live_component
 
   alias MethodKnow.Resources
+  alias MethodKnow.Resources.Resource
 
   @doc """
   Renders a resource card.
@@ -26,7 +27,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
               type="button"
               phx-click={@on_edit}
               phx-value-id={@resource.id}
-              class="icon-btn"
+              class="icon-btn text-base-content"
               title="Edit"
             >
               <Lucide.pencil class="size-5 text-slate-500 hover:text-slate-700" />
@@ -35,7 +36,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
               type="button"
               phx-click={@on_delete}
               phx-value-id={@resource.id}
-              class="icon-btn"
+              class="icon-btn text-base-content"
               title="Delete"
             >
               <Lucide.trash_2 class="size-5 text-slate-500 hover:text-slate-700" />
@@ -44,7 +45,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
         </div>
       </div>
       <div class="flex flex-col h-full px-4 pb-2">
-        <h3 class="font-semibold text-lg text-slate-900 mb-1 truncate">{@resource.title}</h3>
+        <h3 class="font-semibold text-lg text-base-content mb-1 truncate">{@resource.title}</h3>
         <p class="text-slate-700 text-sm mb-2">
           {truncate_description(@resource.description)}
         </p>
@@ -53,15 +54,18 @@ defmodule MethodKnowWeb.ResourceCardComponent do
             <Lucide.book_open_text class="size-4" /> by {@resource.author}
           </div>
         <% end %>
+        <%= if @resource.url do %>
+          <.resource_link resource={@resource} />
+        <% end %>
         <div class="mt-auto flex flex-wrap gap-1 mb-2">
           <%= for tag <- (@resource.tags || []) do %>
-            <span class="badge badge-xs border-neutral-300 bg-transparent text-slate-700 p-2 rounded-full">
+            <span class="badge badge-xs border-neutral-300 bg-transparent text-base-content p-2 rounded-full">
               {tag}
             </span>
           <% end %>
         </div>
       </div>
-      <footer class="mt-auto flex items-center justify-between px-4 py-3 bg-slate-50 border-t border-slate-100">
+      <footer class="flex items-center justify-between mt-auto px-4 py-3 bg-slate-50 border-t border-slate-100">
         <.avatar name={@resource.user.name} />
         <span class="text-xs text-slate-500">{relative_date(@resource.inserted_at)}</span>
       </footer>
@@ -77,7 +81,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
 
     {icon_name, label} =
       case assigns.type do
-        ^article -> {"book_open", "Article"}
+        ^article -> {"newspaper", "Article"}
         ^code_snippet -> {"code_2", "Code Snippet"}
         ^learning_resource -> {"graduation_cap", "Learning Resource"}
         _ -> {"help_circle", String.capitalize(to_string(assigns.type))}
@@ -86,9 +90,39 @@ defmodule MethodKnowWeb.ResourceCardComponent do
     assigns = assign(assigns, icon_name: icon_name, label: label)
 
     ~H"""
-    <span class="badge badge-sm bg-slate-100 text-slate-900 font-medium px-2 py-1 rounded-full inline-flex items-center">
+    <span class="badge badge-sm border-neutral-300 bg-transparent text-base-content font-medium p-2.5 rounded-full inline-flex items-center">
       <Lucide.render icon={@icon_name} class="size-4 mr-1" />{@label}
     </span>
+    """
+  end
+
+  # Resource link component
+  attr :resource, Resource, required: true
+
+  def resource_link(assigns) do
+    [article, _code_snippet, learning_resource] = Resources.resource_types()
+
+    link_text =
+      case assigns.resource.resource_type do
+        ^article -> "View article"
+        ^learning_resource -> "View resource"
+        _ -> "View"
+      end
+
+    assigns = assign(assigns, link_text: link_text)
+
+    ~H"""
+    <div class="mt-2">
+      <a
+        href={@resource.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1 text-primary hover:text-primary-focus hover:no-underline text-sm font-medium underline underline-offset-4"
+      >
+        <Lucide.external_link class="size-4" />
+        {@link_text}
+      </a>
+    </div>
     """
   end
 
@@ -103,8 +137,6 @@ defmodule MethodKnowWeb.ResourceCardComponent do
   defp truncate_description(_), do: ""
 
   defp relative_date(datetime) do
-    # Use Timex or built-in for relative date formatting
-    # For now, show as "x days ago"
     days = DateTime.diff(DateTime.utc_now(), datetime, :day)
 
     cond do
