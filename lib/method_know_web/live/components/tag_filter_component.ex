@@ -32,7 +32,7 @@ defmodule MethodKnowWeb.TagFilterComponent do
       <%= if @tags != [] do %>
         <div class="flex flex-wrap gap-2 mb-2">
           <%= for tag <- @tags do %>
-            <span class="badge badge-primary badge-sm flex items-center">
+            <span class="badge badge-primary badge-sm p-2 rounded-full flex items-center">
               {tag}
               <button
                 type="button"
@@ -54,7 +54,7 @@ defmodule MethodKnowWeb.TagFilterComponent do
         name="tag_input"
         value={@tag_input}
         class="input input-bordered w-full"
-        placeholder="Add tags..."
+        placeholder="Add tag"
         autocomplete="off"
         phx-target={@myself}
         phx-focus="show_tag_dropdown"
