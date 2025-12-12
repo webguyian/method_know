@@ -18,19 +18,40 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         </:subtitle>
       </.header>
 
-      <.search_form search={@search} />
+      <div class="flex items-center gap-2 w-full mb-2">
+        <div class="flex-1">
+          <.search_form search={@search} />
+        </div>
+        <button
+          type="button"
+          class="ml-2 flex items-center gap-1 px-3 py-2 -translate-y-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium shadow-sm hover:bg-slate-50 transition md:hidden h-full"
+          phx-click="toggle_filters"
+          id="filters-toggle-btn"
+        >
+          <Lucide.sliders_horizontal class="size-5 mr-1" /> Filters
+        </button>
+      </div>
 
-      <div class="grid grid-cols-5 gap-8 py-4 items-start">
-        <.filter_panel
-          resource_types={@resource_types}
-          selected_types={@selected_types}
-          all_tags={@all_tags}
-          selected_tags={@selected_tags}
-        />
+      <div class="grid grid-cols-1 gap-8 py-4 items-start md:grid-cols-5">
+        <div
+          class={[
+            "md:col-span-1",
+            (@show_filters_on_mobile && "block") || "hidden",
+            "md:block"
+          ]}
+          id="filters-panel"
+        >
+          <.filter_panel
+            resource_types={@resource_types}
+            selected_types={@selected_types}
+            all_tags={@all_tags}
+            selected_tags={@selected_tags}
+          />
+        </div>
 
         <div
           id="resources-grid"
-          class="col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-6"
+          class="md:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-6"
           phx-update="stream"
         >
           <%= for {id, resource} <- @streams.resources do %>
@@ -165,7 +186,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        show_form: false,
        search: "",
        tags: [],
-       tag_input: ""
+       tag_input: "",
+       show_filters_on_mobile: false
      )
      |> stream(:resources, get_resources(socket.assigns))}
   end
@@ -180,13 +202,6 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> assign(:form_title, "Edit resource")
      |> assign(:tags, resource.tags || [])
      |> assign(:show_form, true)}
-  end
-
-  def handle_event("show_delete_modal", %{"id" => id}, socket) do
-    {:noreply,
-     socket
-     |> assign(:show_delete_modal, true)
-     |> assign(:delete_resource_id, id)}
   end
 
   def handle_event("hide_delete_modal", _params, socket) do
@@ -278,12 +293,23 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> stream(:resources, resources, reset: true)}
   end
 
+  def handle_event("show_delete_modal", %{"id" => id}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_delete_modal, true)
+     |> assign(:delete_resource_id, id)}
+  end
+
   def handle_event("show_form", _params, socket) do
     {:noreply,
      socket
      |> assign(:form_title, "Share a resource")
      |> assign(:show_form, true)
      |> assign(:tags, [])}
+  end
+
+  def handle_event("toggle_filters", _params, socket) do
+    {:noreply, assign(socket, :show_filters_on_mobile, !socket.assigns.show_filters_on_mobile)}
   end
 
   @impl true

@@ -8,7 +8,7 @@ defmodule MethodKnowWeb.FilterPanelComponent do
 
   def filter_panel(assigns) do
     ~H"""
-    <aside class="col-span-1 bg-white rounded-lg shadow-sm border border-base-200 p-6 flex flex-col gap-3">
+    <aside class="sticky top-4 z-20 flex flex-col gap-3 col-span-1 bg-white rounded-lg shadow-sm border border-base-200 p-6">
       <header class="flex items-center justify-between mb-2">
         <h2 class="text-lg font-semibold">Filters</h2>
         <%= if @selected_types != [] or @selected_tags != [] do %>
