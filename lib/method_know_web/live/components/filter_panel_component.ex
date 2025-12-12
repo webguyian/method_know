@@ -9,7 +9,19 @@ defmodule MethodKnowWeb.FilterPanelComponent do
   def filter_panel(assigns) do
     ~H"""
     <aside class="col-span-1 bg-white rounded-lg shadow-sm border border-base-200 p-6 flex flex-col gap-3">
-      <h2 class="text-lg font-semibold">Filters</h2>
+      <header class="flex items-center justify-between mb-2">
+        <h2 class="text-lg font-semibold">Filters</h2>
+        <%= if @selected_types != [] or @selected_tags != [] do %>
+          <button
+            class="text-sm text-base-content underline underline-offset-4 hover:text-base-content/80 hover:no-underline transition-colors"
+            id="reset-filters-btn"
+            phx-click="filter_reset"
+            type="button"
+          >
+            Reset Filters
+          </button>
+        <% end %>
+      </header>
       <section>
         <h3 class="text-base font-normal leading-7 mb-2">Resource Type</h3>
         <form class="flex flex-col gap-2" phx-change="filter_type">

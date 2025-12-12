@@ -141,6 +141,17 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> stream(:resources, resources, reset: true)}
   end
 
+  def handle_event("reset_filters", _params, socket) do
+    selected_tags = selected_types = []
+    resources = list_resources(selected_types, selected_tags)
+
+    {:noreply,
+     socket
+     |> assign(:selected_tags, selected_tags)
+     |> assign(:selected_types, selected_types)
+     |> stream(:resources, resources, reset: true)}
+  end
+
   def handle_event("delete", %{"id" => id}, socket) do
     resource = Resources.get_resource!(socket.assigns.current_scope, id)
     {:ok, _} = Resources.delete_resource(socket.assigns.current_scope, resource)
