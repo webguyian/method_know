@@ -40,7 +40,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
               resource={resource}
               current_user={@current_scope && @current_scope.user}
               on_edit="edit"
-              on_delete="delete"
+              on_delete="show_delete_modal"
             />
           <% end %>
         </div>
@@ -60,6 +60,13 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           tag_input={@tag_input}
         />
       <% end %>
+
+      <.delete_modal
+        show={@show_delete_modal}
+        id={@delete_resource_id}
+        on_cancel="hide_delete_modal"
+        on_confirm="confirm_delete"
+      />
     </Layouts.app>
     """
   end
@@ -85,6 +92,57 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     """
   end
 
+  # Delete confirmation modal component
+  attr :show, :boolean, required: true
+  attr :id, :string, required: false
+  attr :on_cancel, :string, required: true
+  attr :on_confirm, :string, required: true
+
+  def delete_modal(assigns) do
+    ~H"""
+    <%= if @show do %>
+      <div class="fixed inset-0 z-50 flex items-center justify-center">
+        <div
+          class="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+          aria-hidden="true"
+        >
+        </div>
+        <div
+          class="relative bg-white rounded-md shadow-2xl max-w-lg w-full mx-4 p-6 animate-fade-in"
+          phx-click-away={@on_cancel}
+        >
+          <h2 class="text-lg font-semibold text-slate-900 text-left leading-7 mb-2">
+            Are you sure you want to delete this resource?
+          </h2>
+          <p class="text-slate-500 mb-6">
+            This action cannot be undone. This will permanently delete your resource and remove your data from our servers.
+          </p>
+          <div class="flex justify-end gap-3 w-full">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition"
+              id="cancel-delete-btn"
+              phx-click={@on_cancel}
+              phx-mounted={JS.focus()}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              class="px-4 py-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition shadow-sm"
+              id="confirm-delete-btn"
+              phx-click={@on_confirm}
+              phx-value-id={@id}
+            >
+              Continue
+            </button>
+          </div>
+        </div>
+      </div>
+    <% end %>
+    """
+  end
+
   @impl true
   def mount(_params, _session, %{assigns: %{current_scope: current_scope}} = socket) do
     if connected?(socket) and current_scope do
@@ -98,14 +156,16 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> assign(
        page_title: if(my_resources?, do: "Your resources", else: "Discover Resources"),
        all_tags: Resources.list_all_tags(),
+       delete_resource_id: nil,
+       resource: nil,
        resource_types: Resources.resource_types_with_labels(),
        selected_types: [],
        selected_tags: [],
-       tags: [],
-       tag_input: "",
+       show_delete_modal: false,
        show_form: false,
        search: "",
-       resource: nil
+       tags: [],
+       tag_input: ""
      )
      |> stream(:resources, get_resources(socket.assigns))}
   end
@@ -122,11 +182,30 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> assign(:show_form, true)}
   end
 
-  def handle_event("delete", %{"id" => id}, socket) do
+  def handle_event("show_delete_modal", %{"id" => id}, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_delete_modal, true)
+     |> assign(:delete_resource_id, id)}
+  end
+
+  def handle_event("hide_delete_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_delete_modal, false)
+     |> assign(:delete_resource_id, nil)}
+  end
+
+  def handle_event("confirm_delete", %{"id" => id}, socket) do
     resource = Resources.get_resource!(socket.assigns.current_scope, id)
     {:ok, _} = Resources.delete_resource(socket.assigns.current_scope, resource)
 
-    {:noreply, stream_delete(socket, :resources, resource)}
+    {:noreply,
+     socket
+     |> assign(:show_delete_modal, false)
+     |> assign(:delete_resource_id, nil)
+     |> stream_delete(:resources, resource)
+     |> show_toast("Resource deleted!")}
   end
 
   def handle_event("filter_reset", _params, socket) do
@@ -221,7 +300,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     socket =
       socket
       |> update_all_tags()
-      |> show_toast("Resource created successfully")
+      |> show_toast("New resource successfully added!")
 
     {:noreply, socket}
   end
@@ -230,7 +309,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     socket =
       socket
       |> update_all_tags()
-      |> show_toast("Resource updated successfully")
+      |> show_toast("Resource updated!")
 
     {:noreply, socket}
   end
