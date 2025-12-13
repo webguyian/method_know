@@ -75,14 +75,24 @@ defmodule MethodKnowWeb.ResourceLive.FormComponent do
           id="tag-filter"
           all_tags={@all_tags}
           tags={@tags}
-          tag_input={@tag_input}
         />
         <%= if @form[:id].value do %>
           <input type="hidden" name="resource[id]" value={@form[:id].value} />
         <% end %>
         <input type="hidden" name="resource[tags]" value={Enum.join(@tags, ",")} />
         <div class="flex flex-row-reverse justify-end gap-2 mt-auto">
-          <.button class="w-1/2" phx-disable-with="Saving..." variant="primary">Share</.button>
+          <.button
+            class="w-1/2"
+            phx-disable-with="Saving..."
+            variant="primary"
+            disabled={@form.source.changes == %{}}
+          >
+            <%= if @form_action == :edit do %>
+              Save Changes
+            <% else %>
+              Share
+            <% end %>
+          </.button>
           <.button class="w-1/2" type="button" phx-click={@on_close} phx-target={@myself}>
             Cancel
           </.button>

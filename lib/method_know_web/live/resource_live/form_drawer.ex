@@ -6,13 +6,16 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
 
   @impl true
   def update(assigns, socket) do
-    resource = assigns[:resource] || %Resource{}
-    changeset = Resources.change_resource(assigns.current_scope, resource)
+    # Only reset form state if resource, form_action, or show_form changed
+    resource_changed = Map.get(assigns, :resource) != Map.get(socket.assigns, :resource)
+    action_changed = Map.get(assigns, :form_action) != Map.get(socket.assigns, :form_action)
+    show_form_changed = Map.get(assigns, :show_form) != Map.get(socket.assigns, :show_form)
 
-    {:ok,
-     socket
-     |> assign(assigns)
-     |> assign(:form, to_form(changeset))}
+    if resource_changed or action_changed or show_form_changed do
+      {:ok, reset_form_state(assigns, socket)}
+    else
+      {:ok, assign(socket, assigns)}
+    end
   end
 
   @impl true
@@ -56,7 +59,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
             myself={@myself}
             all_tags={@all_tags}
             tags={@tags}
-            tag_input={@tag_input}
+            form_action={@form_action}
           />
         </div>
       </div>
@@ -81,17 +84,27 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   @impl true
   def handle_event("validate", %{"resource" => resource_params}, socket) do
     resource_params = normalize_tags(resource_params)
+    prev_params = socket.assigns[:form_params] || %{}
+    merged_params = Map.merge(prev_params, resource_params)
+    merged_params = Map.put(merged_params, "tags", socket.assigns.tags)
 
-    changeset =
-      Resources.change_resource(socket.assigns.current_scope, %Resource{}, resource_params)
+    resource = socket.assigns[:resource] || %Resource{}
+    changeset = Resources.change_resource(socket.assigns.current_scope, resource, merged_params)
+
+    # Send updated params to parent so it can keep form_params in sync
+    send(self(), {:form_params_updated, merged_params})
 
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
   end
 
   def handle_event("save", %{"resource" => resource_params}, socket) do
     resource_params = normalize_tags(resource_params)
+    params = Map.put(resource_params, "tags", socket.assigns.tags)
 
-    case Resources.create_or_update_resource(socket.assigns.current_scope, resource_params) do
+    # Send updated params to parent so it can keep form_params in sync
+    send(self(), {:form_params_updated, params})
+
+    case Resources.create_or_update_resource(socket.assigns.current_scope, params) do
       {:ok, _resource} ->
         action = if resource_params["id"], do: :updated, else: :created
         send(self(), {:resource_saved, action})
@@ -101,6 +114,20 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
       {:error, %Ecto.Changeset{} = changeset} ->
         {:noreply, assign(socket, form: to_form(changeset))}
     end
+  end
+
+  def handle_info({:tags_updated, new_tags}, socket) do
+    changeset =
+      Resources.change_resource(
+        socket.assigns.current_scope,
+        %Resource{},
+        Map.put(socket.assigns.form.params || %{}, "tags", new_tags)
+      )
+
+    {:noreply,
+     socket
+     |> assign(:tags, new_tags)
+     |> assign(:form, to_form(changeset, action: :validate))}
   end
 
   defp normalize_tags(params) do
@@ -115,5 +142,23 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
     else
       params
     end
+  end
+
+  defp reset_form_state(assigns, socket) do
+    resource = assigns[:resource] || %Resource{}
+    params = assigns[:form_params] || %{}
+    is_new = Map.get(assigns, :form_action) == :new
+
+    # Always clear form state if form_action is :new (Share Resource)
+    changeset =
+      if is_new do
+        Resources.change_resource(assigns.current_scope, %Resource{}, %{})
+      else
+        Resources.change_resource(assigns.current_scope, resource, params)
+      end
+
+    socket
+    |> assign(assigns)
+    |> assign(:form, to_form(changeset))
   end
 end

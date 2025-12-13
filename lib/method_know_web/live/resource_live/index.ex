@@ -88,7 +88,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           on_close="hide_form"
           all_tags={@all_tags}
           tags={@tags}
-          tag_input={@tag_input}
+          form_action={@form_action}
+          form_params={@form_params}
         />
       <% end %>
 
@@ -200,6 +201,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        page_title: if(my_resources?, do: "Your resources", else: "Discover Resources"),
        all_tags: Resources.list_all_tags(),
        delete_resource_id: nil,
+       form_action: :new,
+       form_params: %{},
        resource: nil,
        resource_types: Resources.resource_types_with_labels(),
        selected_types: [],
@@ -208,7 +211,6 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        show_form: false,
        search: "",
        tags: [],
-       tag_input: "",
        show_filters_on_mobile: false,
        toast_message: nil,
        toast_visible: false
@@ -217,16 +219,6 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   end
 
   @impl true
-  def handle_event("edit", %{"id" => id}, socket) do
-    resource = Resources.get_resource!(socket.assigns.current_scope, id)
-
-    {:noreply,
-     socket
-     |> assign(:resource, resource)
-     |> assign(:form_title, "Edit resource")
-     |> assign(:tags, resource.tags || [])
-     |> assign(:show_form, true)}
-  end
 
   def handle_event("apply_filters", _params, socket) do
     selected_types = socket.assigns.maybe_selected_types || socket.assigns.selected_types
@@ -235,11 +227,13 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
     {:noreply,
      socket
-     |> assign(:selected_types, selected_types)
-     |> assign(:selected_tags, selected_tags)
-     |> assign(:maybe_selected_types, nil)
-     |> assign(:maybe_selected_tags, nil)
-     |> assign(:show_filters_on_mobile, false)
+     |> assign(
+       maybe_selected_tags: nil,
+       maybe_selected_types: nil,
+       selected_tags: selected_tags,
+       selected_types: selected_types,
+       show_filters_on_mobile: false
+     )
      |> stream(:resources, resources, reset: true)}
   end
 
@@ -253,6 +247,32 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> assign(:delete_resource_id, nil)
      |> stream_delete(:resources, resource)
      |> show_toast("Resource deleted!")}
+  end
+
+  def handle_event("edit", %{"id" => id}, socket) do
+    resource = Resources.get_resource!(socket.assigns.current_scope, id)
+    # Set form_params to the resource's fields for editing
+    form_params = %{
+      "resource_type" => resource.resource_type,
+      "title" => resource.title,
+      "description" => resource.description,
+      "url" => resource.url,
+      "author" => resource.author,
+      "code" => resource.code,
+      "language" => resource.language,
+      "tags" => resource.tags || []
+    }
+
+    {:noreply,
+     socket
+     |> assign(
+       form_action: :edit,
+       form_title: "Edit resource",
+       resource: resource,
+       form_params: form_params,
+       show_form: true,
+       tags: resource.tags || []
+     )}
   end
 
   def handle_event("filter_reset", _params, socket) do
@@ -325,6 +345,11 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> assign(:delete_resource_id, nil)}
   end
 
+  def handle_event("hide_tag_dropdown", _params, socket) do
+    # No-op handler after form is hidden
+    {:noreply, socket}
+  end
+
   def handle_event("maybe_filter_tag", %{"tag" => tag}, socket) do
     maybe_selected_tags =
       if tag in (socket.assigns.maybe_selected_tags || socket.assigns.selected_tags) do
@@ -378,9 +403,14 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def handle_event("show_form", _params, socket) do
     {:noreply,
      socket
-     |> assign(:form_title, "Share a resource")
-     |> assign(:show_form, true)
-     |> assign(:tags, [])}
+     |> assign(
+       form_action: :new,
+       form_title: "Share a resource",
+       form_params: %{},
+       resource: nil,
+       show_form: true,
+       tags: []
+     )}
   end
 
   def handle_event("toggle_filters", _params, socket) do
@@ -414,6 +444,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply, assign(socket, :show_form, false)}
   end
 
+  def handle_info({:form_params_updated, params}, socket) do
+    {:noreply, assign(socket, :form_params, params)}
+  end
+
   def handle_info(:hide_toast, socket) do
     {:noreply, socket |> assign(:toast_visible, false) |> assign(:toast_message, nil)}
   end
@@ -436,16 +470,18 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply, socket}
   end
 
-  def handle_info({:tags_updated, tags}, socket) do
-    {:noreply, assign(socket, tags: tags)}
-  end
-
   def handle_info({:tags_committed, tags}, socket) do
     {:noreply, assign(socket, all_tags: tags)}
   end
 
-  def handle_info(:clear_flash, socket) do
-    {:noreply, clear_flash(socket)}
+  def handle_info({:tags_updated, tags}, socket) do
+    # Merge new tags into form_params, preserving all other fields
+    form_params = Map.put(socket.assigns.form_params || %{}, "tags", tags)
+
+    {:noreply,
+     socket
+     |> assign(:tags, tags)
+     |> assign(:form_params, form_params)}
   end
 
   defp get_resources(assigns, selected_types \\ [], selected_tags \\ [], search \\ "") do
