@@ -9,28 +9,32 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
-      <.header>
-        {@page_title}
-        <:subtitle>
-          <%= if @live_action != :my do %>
-            Explore shared knowledge from our community
-          <% end %>
-        </:subtitle>
-      </.header>
+      <%= if @toast_visible do %>
+        <.toast message={@toast_message} />
+      <% else %>
+        <.header>
+          {@page_title}
+          <:subtitle>
+            <%= if @live_action != :my do %>
+              Explore shared knowledge from our community
+            <% end %>
+          </:subtitle>
+        </.header>
 
-      <div class="flex items-center gap-2 w-full mb-2">
-        <div class="flex-1">
-          <.search_form search={@search} />
+        <div class="flex items-center gap-2 w-full mb-2">
+          <div class="flex-1">
+            <.search_form search={@search} />
+          </div>
+          <button
+            type="button"
+            class="ml-2 flex items-center gap-1 px-3 py-2 -translate-y-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium shadow-sm hover:bg-slate-50 transition md:hidden h-full"
+            phx-click="toggle_filters"
+            id="filters-toggle-btn"
+          >
+            <Lucide.sliders_horizontal class="size-5 mr-1" /> Filters
+          </button>
         </div>
-        <button
-          type="button"
-          class="ml-2 flex items-center gap-1 px-3 py-2 -translate-y-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium shadow-sm hover:bg-slate-50 transition md:hidden h-full"
-          phx-click="toggle_filters"
-          id="filters-toggle-btn"
-        >
-          <Lucide.sliders_horizontal class="size-5 mr-1" /> Filters
-        </button>
-      </div>
+      <% end %>
 
       <div class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-8 py-4 items-start">
         <div
@@ -170,6 +174,18 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     """
   end
 
+  # Inline toast component
+  attr :message, :string, required: true
+
+  def toast(assigns) do
+    ~H"""
+    <div class="w-full bg-white border border-slate-300 rounded-md flex items-center p-4 mb-4 shadow-sm animate-fade-in">
+      <Lucide.check class="size-9 mr-3 flex-shrink-0 text-black" />
+      <span class="text-slate-800 text-base font-medium">{@message}</span>
+    </div>
+    """
+  end
+
   @impl true
   def mount(_params, _session, %{assigns: %{current_scope: current_scope}} = socket) do
     if connected?(socket) and current_scope do
@@ -193,7 +209,9 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        search: "",
        tags: [],
        tag_input: "",
-       show_filters_on_mobile: false
+       show_filters_on_mobile: false,
+       toast_message: nil,
+       toast_visible: false
      )
      |> stream(:resources, get_resources(socket.assigns))}
   end
@@ -396,6 +414,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply, assign(socket, :show_form, false)}
   end
 
+  def handle_info(:hide_toast, socket) do
+    {:noreply, socket |> assign(:toast_visible, false) |> assign(:toast_message, nil)}
+  end
+
   def handle_info({:resource_saved, :created}, socket) do
     socket =
       socket
@@ -481,9 +503,12 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     |> String.contains?(search)
   end
 
-  defp show_toast(socket, message, kind \\ :success, timeout \\ 4000) do
-    Process.send_after(self(), :clear_flash, timeout)
-    put_flash(socket, kind, message)
+  defp show_toast(socket, message) do
+    Process.send_after(self(), :hide_toast, 3000)
+
+    socket
+    |> assign(:toast_message, message)
+    |> assign(:toast_visible, true)
   end
 
   defp update_all_tags(socket) do
