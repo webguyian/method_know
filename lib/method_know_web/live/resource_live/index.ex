@@ -32,13 +32,9 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         </button>
       </div>
 
-      <div class="grid grid-cols-1 gap-8 py-4 items-start md:grid-cols-5">
+      <div class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-8 py-4 items-start">
         <div
-          class={[
-            "md:col-span-1",
-            (@show_filters_on_mobile && "block") || "hidden",
-            "md:block"
-          ]}
+          class="hidden md:block md:col-span-2 lg:col-span-2 xl:col-span-2 order-none"
           id="filters-panel"
         >
           <.filter_panel
@@ -48,10 +44,9 @@ defmodule MethodKnowWeb.ResourceLive.Index do
             selected_tags={@selected_tags}
           />
         </div>
-
         <div
+          class="md:col-span-4 lg:col-span-5 xl:col-span-6 order-1 grid grid-cols-1 lg:grid-cols-2 gap-6"
           id="resources-grid"
-          class="md:col-span-4 grid grid-cols-1 sm:grid-cols-2 gap-6"
           phx-update="stream"
         >
           <%= for {id, resource} <- @streams.resources do %>
@@ -65,6 +60,17 @@ defmodule MethodKnowWeb.ResourceLive.Index do
             />
           <% end %>
         </div>
+        <%= if @show_filters_on_mobile do %>
+          <div class="fixed inset-x-0 top-0 z-40 mx-2 md:hidden flex justify-center">
+            <.filter_panel
+              resource_types={@resource_types}
+              selected_types={@maybe_selected_types || @selected_types}
+              all_tags={@all_tags}
+              selected_tags={@maybe_selected_tags || @selected_tags}
+              show_mobile_modal={true}
+            />
+          </div>
+        <% end %>
       </div>
 
       <%= if @show_form do %>
@@ -204,11 +210,19 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> assign(:show_form, true)}
   end
 
-  def handle_event("hide_delete_modal", _params, socket) do
+  def handle_event("apply_filters", _params, socket) do
+    selected_types = socket.assigns.maybe_selected_types || socket.assigns.selected_types
+    selected_tags = socket.assigns.maybe_selected_tags || socket.assigns.selected_tags
+    resources = get_resources(socket.assigns, selected_types, selected_tags)
+
     {:noreply,
      socket
-     |> assign(:show_delete_modal, false)
-     |> assign(:delete_resource_id, nil)}
+     |> assign(:selected_types, selected_types)
+     |> assign(:selected_tags, selected_tags)
+     |> assign(:maybe_selected_types, nil)
+     |> assign(:maybe_selected_tags, nil)
+     |> assign(:show_filters_on_mobile, false)
+     |> stream(:resources, resources, reset: true)}
   end
 
   def handle_event("confirm_delete", %{"id" => id}, socket) do
@@ -225,13 +239,23 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   def handle_event("filter_reset", _params, socket) do
     selected_tags = selected_types = []
-    resources = get_resources(socket.assigns, selected_types, selected_tags)
 
-    {:noreply,
-     socket
-     |> assign(:selected_tags, selected_tags)
-     |> assign(:selected_types, selected_types)
-     |> stream(:resources, resources, reset: true)}
+    socket =
+      if socket.assigns.show_filters_on_mobile do
+        assign(socket,
+          maybe_selected_tags: [],
+          maybe_selected_types: []
+        )
+      else
+        resources = get_resources(socket.assigns, selected_types, selected_tags)
+
+        socket
+        |> assign(:selected_tags, selected_tags)
+        |> assign(:selected_types, selected_types)
+        |> stream(:resources, resources, reset: true)
+      end
+
+    {:noreply, socket}
   end
 
   def handle_event("filter_tag", %{"tag" => tag}, socket) do
@@ -276,6 +300,39 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> stream(:resources, resources, reset: true)}
   end
 
+  def handle_event("hide_delete_modal", _params, socket) do
+    {:noreply,
+     socket
+     |> assign(:show_delete_modal, false)
+     |> assign(:delete_resource_id, nil)}
+  end
+
+  def handle_event("maybe_filter_tag", %{"tag" => tag}, socket) do
+    maybe_selected_tags =
+      if tag in (socket.assigns.maybe_selected_tags || socket.assigns.selected_tags) do
+        List.delete(socket.assigns.maybe_selected_tags || socket.assigns.selected_tags, tag)
+      else
+        [tag | socket.assigns.maybe_selected_tags || socket.assigns.selected_tags]
+      end
+
+    {:noreply, assign(socket, :maybe_selected_tags, maybe_selected_tags)}
+  end
+
+  def handle_event("maybe_filter_type", %{"resource_type" => types}, socket) do
+    maybe_selected_types =
+      case types do
+        t when is_list(t) -> t
+        t when is_binary(t) -> [t]
+        _ -> []
+      end
+
+    {:noreply, assign(socket, :maybe_selected_types, maybe_selected_types)}
+  end
+
+  def handle_event("maybe_filter_type", %{"_target" => ["resource_type"]}, socket) do
+    {:noreply, assign(socket, :maybe_selected_types, [])}
+  end
+
   def handle_event("search", %{"search" => search}, socket) do
     search = String.trim(search || "")
 
@@ -309,7 +366,24 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   end
 
   def handle_event("toggle_filters", _params, socket) do
-    {:noreply, assign(socket, :show_filters_on_mobile, !socket.assigns.show_filters_on_mobile)}
+    show = !socket.assigns.show_filters_on_mobile
+
+    socket =
+      if show do
+        assign(socket,
+          show_filters_on_mobile: true,
+          maybe_selected_types: socket.assigns.selected_types,
+          maybe_selected_tags: socket.assigns.selected_tags
+        )
+      else
+        assign(socket,
+          show_filters_on_mobile: false,
+          maybe_selected_types: nil,
+          maybe_selected_tags: nil
+        )
+      end
+
+    {:noreply, socket}
   end
 
   @impl true
