@@ -39,3 +39,10 @@ npm-debug.log
 *.db
 *.db-*
 
+# SQLite database files 
+/var
+*.sqlite3*
+
+# PEM and key files 
+*.pem
+*.key
