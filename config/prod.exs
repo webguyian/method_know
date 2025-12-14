@@ -10,7 +10,10 @@ config :method_know, MethodKnowWeb.Endpoint,
 
 # Force using SSL in production. This also sets the "strict-security-transport" header,
 # also known as HSTS. `:force_ssl` is required to be set at compile-time.
-config :method_know, MethodKnowWeb.Endpoint, server: true
+config :method_know, MethodKnowWeb.Endpoint,
+  force_ssl: [hsts: true, rewrite_on: [:x_forwarded_proto]],
+  server: true,
+  check_origin: ["//bakeoff.run.place"]
 
 # Configure Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Req

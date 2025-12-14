@@ -31,6 +31,9 @@ method_know-*.tar
 # Ignore digested assets cache.
 /priv/static/cache_manifest.json
 
+# Ignore SSL certificates and keys
+/priv/ssl/
+
 # In case you use Node.js/npm, you want to ignore these.
 npm-debug.log
 /assets/node_modules/
@@ -42,7 +45,3 @@ npm-debug.log
 # SQLite database files 
 /var
 *.sqlite3*
-
-# PEM and key files 
-*.pem
-*.key
