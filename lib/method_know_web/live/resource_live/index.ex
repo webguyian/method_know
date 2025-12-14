@@ -21,33 +21,49 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           </:subtitle>
         </.header>
 
-        <div class="flex items-center gap-2 w-full mb-2">
-          <div class="flex-1">
-            <.search_form search={@search} />
+        <%= if @resources_empty? and @search == "" do %>
+          <div class="w-full flex justify-center items-center my-8">
+            <div class="border border-slate-300 bg-white rounded-lg px-8 py-12 text-center shadow-sm max-w-2xl w-full">
+              <div class="flex flex-col items-center gap-2">
+                <Lucide.info class="size-10 text-slate-400 mb-2" />
+                <h3 class="text-lg font-semibold text-slate-700 mb-1">No resources found</h3>
+                <p class="text-slate-500 text-base">
+                  There are currently no resources to display.
+                </p>
+              </div>
+            </div>
           </div>
-          <button
-            type="button"
-            class="ml-2 flex items-center gap-1 px-3 py-2 -translate-y-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium shadow-sm hover:bg-slate-50 transition md:hidden h-full"
-            phx-click="toggle_filters"
-            id="filters-toggle-btn"
-          >
-            <Lucide.sliders_horizontal class="size-5 mr-1" /> Filters
-          </button>
-        </div>
+        <% else %>
+          <div class="flex items-center gap-2 w-full mb-2">
+            <div class="flex-1">
+              <.search_form search={@search} />
+            </div>
+            <button
+              type="button"
+              class="ml-2 flex items-center gap-1 px-3 py-2 -translate-y-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium shadow-sm hover:bg-slate-50 transition md:hidden h-full"
+              phx-click="toggle_filters"
+              id="filters-toggle-btn"
+            >
+              <Lucide.sliders_horizontal class="size-5 mr-1" /> Filters
+            </button>
+          </div>
+        <% end %>
       <% end %>
 
       <div class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-8 py-4 items-start">
-        <div
-          class="hidden md:block md:col-span-2 lg:col-span-2 xl:col-span-2 order-none"
-          id="filters-panel"
-        >
-          <.filter_panel
-            resource_types={@resource_types}
-            selected_types={@selected_types}
-            all_tags={@all_tags}
-            selected_tags={@selected_tags}
-          />
-        </div>
+        <%= unless @resources_empty? and @search == "" do %>
+          <div
+            class="hidden md:block md:col-span-2 lg:col-span-2 xl:col-span-2 order-none"
+            id="filters-panel"
+          >
+            <.filter_panel
+              resource_types={@resource_types}
+              selected_types={@selected_types}
+              all_tags={@all_tags}
+              selected_tags={@selected_tags}
+            />
+          </div>
+        <% end %>
         <div
           class="md:col-span-4 lg:col-span-5 xl:col-span-6 order-1 grid grid-cols-1 lg:grid-cols-2 gap-6"
           id="resources-grid"
@@ -195,6 +211,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
     my_resources? = socket.assigns.live_action == :my
 
+    resources = get_resources(socket.assigns)
+
     {:ok,
      socket
      |> assign(
@@ -213,9 +231,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        tags: [],
        show_filters_on_mobile: false,
        toast_message: nil,
-       toast_visible: false
+       toast_visible: false,
+       resources_empty?: Enum.empty?(resources)
      )
-     |> stream(:resources, get_resources(socket.assigns))}
+     |> stream(:resources, resources)}
   end
 
   @impl true
@@ -232,7 +251,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        maybe_selected_types: nil,
        selected_tags: selected_tags,
        selected_types: selected_types,
-       show_filters_on_mobile: false
+       show_filters_on_mobile: false,
+       resources_empty?: Enum.empty?(resources)
      )
      |> stream(:resources, resources, reset: true)}
   end
@@ -290,6 +310,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         socket
         |> assign(:selected_tags, selected_tags)
         |> assign(:selected_types, selected_types)
+        |> assign(:resources_empty?, Enum.empty?(resources))
         |> stream(:resources, resources, reset: true)
       end
 
@@ -309,6 +330,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply,
      socket
      |> assign(:selected_tags, selected_tags)
+     |> assign(:resources_empty?, Enum.empty?(resources))
      |> stream(:resources, resources, reset: true)}
   end
 
@@ -325,6 +347,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply,
      socket
      |> assign(:selected_types, selected_types)
+     |> assign(:resources_empty?, Enum.empty?(resources))
      |> stream(:resources, resources, reset: true)}
   end
 
@@ -335,6 +358,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply,
      socket
      |> assign(:selected_types, selected_types)
+     |> assign(:resources_empty?, Enum.empty?(resources))
      |> stream(:resources, resources, reset: true)}
   end
 
@@ -390,6 +414,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply,
      socket
      |> assign(:search, search)
+     |> assign(:resources_empty?, Enum.empty?(resources))
      |> stream(:resources, resources, reset: true)}
   end
 
@@ -437,7 +462,12 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   @impl true
   def handle_info({type, %MethodKnow.Resources.Resource{}}, socket)
       when type in [:created, :updated, :deleted] do
-    {:noreply, stream(socket, :resources, get_resources(socket.assigns), reset: true)}
+    resources = get_resources(socket.assigns)
+
+    {:noreply,
+     socket
+     |> assign(:resources_empty?, Enum.empty?(resources))
+     |> stream(:resources, resources, reset: true)}
   end
 
   def handle_info(:close_drawer, socket) do

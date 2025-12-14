@@ -50,45 +50,47 @@ defmodule MethodKnowWeb.FilterPanelComponent do
           <% end %>
         </form>
       </section>
-      <section>
-        <h3 class="text-base font-normal leading-7 mb-2">Tags</h3>
-        <div class="flex flex-wrap gap-2">
-          <%= for tag <- @all_tags do %>
-            <button
-              type="button"
-              phx-click={if @show_mobile_modal, do: "maybe_filter_tag", else: "filter_tag"}
-              phx-value-tag={tag}
-              class={[
-                "badge rounded-full cursor-pointer ",
-                if(tag in @selected_tags,
-                  do: "badge-primary",
-                  else: "border-neutral-300 bg-transparent"
-                )
-              ]}
-            >
-              {tag}
-            </button>
-          <% end %>
-        </div>
-        <%= if @show_mobile_modal do %>
-          <footer class="border-t border-slate-200 pt-4 mt-4 flex justify-end gap-2">
-            <button
-              type="button"
-              class="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition"
-              phx-click="toggle_filters"
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              class="px-4 py-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition shadow-sm"
-              phx-click="apply_filters"
-            >
-              Apply Filters
-            </button>
-          </footer>
-        <% end %>
-      </section>
+      <%= unless @all_tags == [] do %>
+        <section>
+          <h3 class="text-base font-normal leading-7 mb-2">Tags</h3>
+          <div class="flex flex-wrap gap-2">
+            <%= for tag <- @all_tags do %>
+              <button
+                type="button"
+                phx-click={if @show_mobile_modal, do: "maybe_filter_tag", else: "filter_tag"}
+                phx-value-tag={tag}
+                class={[
+                  "badge rounded-full cursor-pointer ",
+                  if(tag in @selected_tags,
+                    do: "badge-primary",
+                    else: "border-neutral-300 bg-transparent"
+                  )
+                ]}
+              >
+                {tag}
+              </button>
+            <% end %>
+          </div>
+        </section>
+      <% end %>
+      <%= if @show_mobile_modal do %>
+        <footer class="border-t border-slate-200 pt-4 mt-4 flex justify-end gap-2">
+          <button
+            type="button"
+            class="px-4 py-2 rounded-lg border border-slate-300 bg-white text-slate-700 font-medium hover:bg-slate-50 transition"
+            phx-click="toggle_filters"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-lg bg-primary text-white font-semibold hover:bg-primary-dark transition shadow-sm"
+            phx-click="apply_filters"
+          >
+            Apply Filters
+          </button>
+        </footer>
+      <% end %>
     </aside>
     """
   end
