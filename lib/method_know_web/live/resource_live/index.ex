@@ -63,23 +63,30 @@ defmodule MethodKnowWeb.ResourceLive.Index do
               selected_tags={@selected_tags}
             />
           </div>
-        <% end %>
-        <div
-          class="md:col-span-4 lg:col-span-5 xl:col-span-6 order-1 grid grid-cols-1 lg:grid-cols-2 gap-6"
-          id="resources-grid"
-          phx-update="stream"
-        >
-          <%= for {id, resource} <- @streams.resources do %>
-            <.live_component
-              module={MethodKnowWeb.ResourceCardComponent}
-              id={id}
-              resource={resource}
-              current_user={@current_scope && @current_scope.user}
-              on_edit="edit"
-              on_delete="show_delete_modal"
+          <div class="md:col-span-4 lg:col-span-5 xl:col-span-6">
+            <.resource_count
+              total={@total_resource_count}
+              filtered={@filtered_resource_count}
             />
-          <% end %>
-        </div>
+            <div
+              class="order-1 grid grid-cols-1 lg:grid-cols-2 gap-6"
+              id="resources-grid"
+              phx-update="stream"
+            >
+              <%= for {id, resource} <- @streams.resources do %>
+                <.live_component
+                  module={MethodKnowWeb.ResourceCardComponent}
+                  id={id}
+                  resource={resource}
+                  current_user={@current_scope && @current_scope.user}
+                  on_edit="edit"
+                  on_delete="show_delete_modal"
+                />
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
         <%= if @show_filters_on_mobile do %>
           <div class="fixed inset-x-0 top-0 z-40 mx-2 md:hidden flex justify-center">
             <.filter_panel
@@ -191,6 +198,25 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     """
   end
 
+  # Resource count display component
+  attr :total, :integer, required: true
+  attr :filtered, :integer, required: true
+
+  def resource_count(assigns) do
+    ~H"""
+    <p class="mb-4 text-base-content text-base font-normal leading-7" id="resource-count">
+      <%= cond do %>
+        <% @filtered < @total && @filtered > 0 -> %>
+          {"#{@filtered} out of #{@total} resources showing"}
+        <% @filtered > 0 -> %>
+          {"#{@filtered} resources found"}
+        <% true -> %>
+          {"No resources found"}
+      <% end %>
+    </p>
+    """
+  end
+
   # Inline toast component
   attr :message, :string, required: true
 
@@ -210,6 +236,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     end
 
     my_resources? = socket.assigns.live_action == :my
+    {filtered_resources, all_resources} = get_resources_pair(socket.assigns, [], [], "")
 
     resources = get_resources(socket.assigns)
 
@@ -232,9 +259,11 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        show_filters_on_mobile: false,
        toast_message: nil,
        toast_visible: false,
-       resources_empty?: Enum.empty?(resources)
+       resources_empty?: Enum.empty?(resources),
+       total_resource_count: length(all_resources),
+       filtered_resource_count: length(filtered_resources)
      )
-     |> stream(:resources, resources)}
+     |> stream(:resources, filtered_resources)}
   end
 
   @impl true
@@ -242,7 +271,9 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def handle_event("apply_filters", _params, socket) do
     selected_types = socket.assigns.maybe_selected_types || socket.assigns.selected_types
     selected_tags = socket.assigns.maybe_selected_tags || socket.assigns.selected_tags
-    resources = get_resources(socket.assigns, selected_types, selected_tags)
+
+    {filtered, total} =
+      get_resources_pair(socket.assigns, selected_types, selected_tags, socket.assigns.search)
 
     {:noreply,
      socket
@@ -252,9 +283,11 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        selected_tags: selected_tags,
        selected_types: selected_types,
        show_filters_on_mobile: false,
-       resources_empty?: Enum.empty?(resources)
+       resources_empty?: Enum.empty?(filtered),
+       total_resource_count: length(total),
+       filtered_resource_count: length(filtered)
      )
-     |> stream(:resources, resources, reset: true)}
+     |> stream(:resources, filtered, reset: true)}
   end
 
   def handle_event("confirm_delete", %{"id" => id}, socket) do
@@ -296,22 +329,26 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   end
 
   def handle_event("filter_reset", _params, socket) do
-    selected_tags = selected_types = []
+    selected_tags = []
+    selected_types = []
+
+    {filtered, total} =
+      get_resources_pair(socket.assigns, selected_types, selected_tags, socket.assigns.search)
 
     socket =
       if socket.assigns.show_filters_on_mobile do
-        assign(socket,
-          maybe_selected_tags: [],
-          maybe_selected_types: []
-        )
+        socket
+        |> assign(maybe_selected_tags: [], maybe_selected_types: [])
       else
-        resources = get_resources(socket.assigns, selected_types, selected_tags)
-
         socket
         |> assign(:selected_tags, selected_tags)
         |> assign(:selected_types, selected_types)
-        |> assign(:resources_empty?, Enum.empty?(resources))
-        |> stream(:resources, resources, reset: true)
+        |> assign(:maybe_selected_tags, nil)
+        |> assign(:maybe_selected_types, nil)
+        |> assign(:resources_empty?, Enum.empty?(filtered))
+        |> assign(:total_resource_count, length(total))
+        |> assign(:filtered_resource_count, length(filtered))
+        |> stream(:resources, filtered, reset: true)
       end
 
     {:noreply, socket}
@@ -325,13 +362,21 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         [tag | socket.assigns.selected_tags]
       end
 
-    resources = get_resources(socket.assigns, socket.assigns.selected_types, selected_tags)
+    {filtered, total} =
+      get_resources_pair(
+        socket.assigns,
+        socket.assigns.selected_types,
+        selected_tags,
+        socket.assigns.search
+      )
 
     {:noreply,
      socket
      |> assign(:selected_tags, selected_tags)
-     |> assign(:resources_empty?, Enum.empty?(resources))
-     |> stream(:resources, resources, reset: true)}
+     |> assign(:resources_empty?, Enum.empty?(filtered))
+     |> assign(:total_resource_count, length(total))
+     |> assign(:filtered_resource_count, length(filtered))
+     |> stream(:resources, filtered, reset: true)}
   end
 
   def handle_event("filter_type", %{"resource_type" => types}, socket) do
@@ -342,24 +387,41 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         _ -> []
       end
 
-    resources = get_resources(socket.assigns, selected_types, socket.assigns.selected_tags)
+    {filtered, total} =
+      get_resources_pair(
+        socket.assigns,
+        selected_types,
+        socket.assigns.selected_tags,
+        socket.assigns.search
+      )
 
     {:noreply,
      socket
      |> assign(:selected_types, selected_types)
-     |> assign(:resources_empty?, Enum.empty?(resources))
-     |> stream(:resources, resources, reset: true)}
+     |> assign(:resources_empty?, Enum.empty?(filtered))
+     |> assign(:total_resource_count, length(total))
+     |> assign(:filtered_resource_count, length(filtered))
+     |> stream(:resources, filtered, reset: true)}
   end
 
   def handle_event("filter_type", %{"_target" => ["resource_type"]}, socket) do
     selected_types = []
-    resources = get_resources(socket.assigns, selected_types, socket.assigns.selected_tags)
+
+    {filtered, total} =
+      get_resources_pair(
+        socket.assigns,
+        selected_types,
+        socket.assigns.selected_tags,
+        socket.assigns.search
+      )
 
     {:noreply,
      socket
      |> assign(:selected_types, selected_types)
-     |> assign(:resources_empty?, Enum.empty?(resources))
-     |> stream(:resources, resources, reset: true)}
+     |> assign(:resources_empty?, Enum.empty?(filtered))
+     |> assign(:total_resource_count, length(total))
+     |> assign(:filtered_resource_count, length(filtered))
+     |> stream(:resources, filtered, reset: true)}
   end
 
   def handle_event("hide_delete_modal", _params, socket) do
@@ -403,19 +465,17 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def handle_event("search", %{"search" => search}, socket) do
     search = String.trim(search || "")
 
-    resources =
-      get_resources(
-        socket.assigns,
-        socket.assigns.selected_types,
-        socket.assigns.selected_tags,
-        search
-      )
+    selected_types = socket.assigns.selected_types
+    selected_tags = socket.assigns.selected_tags
+    {filtered, total} = get_resources_pair(socket.assigns, selected_types, selected_tags, search)
 
     {:noreply,
      socket
      |> assign(:search, search)
-     |> assign(:resources_empty?, Enum.empty?(resources))
-     |> stream(:resources, resources, reset: true)}
+     |> assign(:resources_empty?, Enum.empty?(filtered))
+     |> assign(:total_resource_count, length(total))
+     |> assign(:filtered_resource_count, length(filtered))
+     |> stream(:resources, filtered, reset: true)}
   end
 
   def handle_event("show_delete_modal", %{"id" => id}, socket) do
@@ -524,6 +584,21 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
       true ->
         list_all_resources(selected_types, selected_tags, search)
+    end
+  end
+
+  defp get_resources_pair(assigns, selected_types, selected_tags, search) do
+    my_resources? = assigns.live_action == :my
+    current_scope = assigns.current_scope
+
+    if my_resources? and current_scope do
+      filtered = list_resources(current_scope, selected_types, selected_tags, search)
+      total = list_resources(current_scope, selected_types, selected_tags, "")
+      {filtered, total}
+    else
+      filtered = list_all_resources(selected_types, selected_tags, search)
+      total = list_all_resources(selected_types, selected_tags, "")
+      {filtered, total}
     end
   end
 
