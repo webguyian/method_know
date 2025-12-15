@@ -45,3 +45,6 @@ npm-debug.log
 # SQLite database files 
 /var
 *.sqlite3*
+
+# macOS system files
+.DS_Store
