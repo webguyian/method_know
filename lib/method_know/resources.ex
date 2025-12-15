@@ -85,6 +85,9 @@ defmodule MethodKnow.Resources do
 
   ## Examples
 
+      iex> get_resource!(id)
+      %Resource{}
+
       iex> get_resource!(scope, 123)
       %Resource{}
 
@@ -92,6 +95,11 @@ defmodule MethodKnow.Resources do
       ** (Ecto.NoResultsError)
 
   """
+  def get_resource!(id) do
+    Resource
+    |> Repo.get!(id)
+  end
+
   def get_resource!(%Scope{} = scope, id) do
     Resource
     |> Repo.get_by!(id: id, user_id: scope.user.id)

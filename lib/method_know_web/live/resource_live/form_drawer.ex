@@ -6,12 +6,12 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
 
   @impl true
   def update(assigns, socket) do
-    # Only reset form state if resource, form_action, or show_form changed
+    # Only reset form state if resource, form_action, or show_drawer changed
     resource_changed = Map.get(assigns, :resource) != Map.get(socket.assigns, :resource)
     action_changed = Map.get(assigns, :form_action) != Map.get(socket.assigns, :form_action)
-    show_form_changed = Map.get(assigns, :show_form) != Map.get(socket.assigns, :show_form)
+    show_drawer_changed = Map.get(assigns, :show_drawer) != Map.get(socket.assigns, :show_drawer)
 
-    if resource_changed or action_changed or show_form_changed do
+    if resource_changed or action_changed or show_drawer_changed do
       {:ok, reset_form_state(assigns, socket)}
     else
       {:ok, assign(socket, assigns)}
@@ -21,7 +21,10 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="fixed inset-0 z-40 flex">
+    <div
+      class="fixed inset-0 z-40 flex"
+      phx-mounted={JS.add_class("overflow-hidden", to: "body")}
+    >
       <div
         class="fixed inset-0 bg-black/30 transition-opacity"
         aria-hidden="true"
@@ -31,13 +34,15 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
         phx-window-keyup="esc_close"
       >
       </div>
-      <div class="relative my-auto ml-auto mr-10 h-[85%] translate-y-6 w-full max-w-[490px] bg-white rounded-xl shadow-xl flex flex-col animate-slide-in-right">
+      <div class="w-full h-full rounded-none md:my-auto md:ml-auto md:mr-10 md:h-[85%] md:max-w-[490px] md:rounded-xl bg-white shadow-xl flex flex-col animate-slide-in-right relative md:translate-y-6">
         <div class="flex items-start justify-between px-6 pt-4">
           <header>
             <h2 class="text-xl font-semibold text-slate-900">{@title}</h2>
-            <p class="text-slate-500 text-sm">
-              Contribute to the knowledge base by sharing valuable content
-            </p>
+            <%= if @form_action != :show do %>
+              <p class="text-slate-500 text-sm">
+                Contribute to the knowledge base by sharing valuable content
+              </p>
+            <% end %>
           </header>
           <button
             type="button"
@@ -50,17 +55,40 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
             <Lucide.x class="size-6 text-slate-400 hover:text-slate-700" />
           </button>
         </div>
-        <div class="flex-1 overflow-visible px-6 py-4">
-          <.live_component
-            module={MethodKnowWeb.ResourceLive.FormComponent}
-            id="resource-form-component"
-            form={@form}
-            on_close={@on_close}
-            myself={@myself}
-            all_tags={@all_tags}
-            tags={@tags}
-            form_action={@form_action}
-          />
+        <div class="flex-1 overflow-visible px-6 py-2">
+          <%= if @form_action == :show do %>
+            <div class="flex flex-col gap-2">
+              <div class="prose max-w-none text-slate-700">
+                {@resource.description}
+              </div>
+              <%= if @resource.author do %>
+                <div class="flex items-center gap-2 text-slate-500 text-xs mb-2">
+                  <Lucide.book_open_text class="size-4" /> by {@resource.author}
+                </div>
+              <% end %>
+              <%= if @resource.url do %>
+                <.resource_link resource={@resource} />
+              <% end %>
+              <div class="mt-4 flex flex-wrap gap-1 mb-2">
+                <%= for tag <- (@resource.tags || []) do %>
+                  <span class="badge badge-xs border-neutral-300 bg-transparent text-base-content p-2 rounded-full">
+                    {tag}
+                  </span>
+                <% end %>
+              </div>
+            </div>
+          <% else %>
+            <.live_component
+              module={MethodKnowWeb.ResourceLive.FormComponent}
+              id="resource-form-component"
+              form={@form}
+              on_close={@on_close}
+              myself={@myself}
+              all_tags={@all_tags}
+              tags={@tags}
+              form_action={@form_action}
+            />
+          <% end %>
         </div>
       </div>
     </div>

@@ -30,6 +30,8 @@ defmodule MethodKnowWeb.CoreComponents do
   use Gettext, backend: MethodKnowWeb.Gettext
 
   alias Phoenix.LiveView.JS
+  alias MethodKnow.Resources
+  alias MethodKnow.Resources.Resource
 
   @doc """
   Renders flash notices.
@@ -499,6 +501,59 @@ defmodule MethodKnowWeb.CoreComponents do
   def icon(%{name: "hero-" <> _} = assigns) do
     ~H"""
     <span class={[@name, @class]} />
+    """
+  end
+
+  # Resource type badge component
+  attr :type, :string, required: true
+
+  def resource_type_badge(assigns) do
+    [article, code_snippet, learning_resource] = Resources.resource_types()
+
+    {icon_name, label} =
+      case assigns.type do
+        ^article -> {"newspaper", "Article"}
+        ^code_snippet -> {"code_2", "Code Snippet"}
+        ^learning_resource -> {"graduation_cap", "Learning Resource"}
+        _ -> {"help_circle", String.capitalize(to_string(assigns.type))}
+      end
+
+    assigns = assign(assigns, icon_name: icon_name, label: label)
+
+    ~H"""
+    <span class="badge badge-sm border-neutral-300 bg-transparent text-base-content font-medium p-2.5 rounded-full inline-flex items-center">
+      <Lucide.render icon={@icon_name} class="size-4 mr-1" />{@label}
+    </span>
+    """
+  end
+
+  # Resource link component
+  attr :resource, Resource, required: true
+
+  def resource_link(assigns) do
+    [article, _code_snippet, learning_resource] = Resources.resource_types()
+
+    link_text =
+      case assigns.resource.resource_type do
+        ^article -> "View article"
+        ^learning_resource -> "View resource"
+        _ -> "View"
+      end
+
+    assigns = assign(assigns, link_text: link_text)
+
+    ~H"""
+    <div class="mt-2">
+      <a
+        href={@resource.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1 text-primary hover:text-primary-focus hover:no-underline text-sm font-medium underline underline-offset-4"
+      >
+        <Lucide.external_link class="size-4" />
+        {@link_text}
+      </a>
+    </div>
     """
   end
 

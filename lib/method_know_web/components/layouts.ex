@@ -134,8 +134,8 @@ defmodule MethodKnowWeb.Layouts do
   def navbar(assigns) do
     ~H"""
     <%= unless @hide_navbar do %>
-      <nav class="navbar bg-base-100 px-4 sm:px-6 lg:px-8 shadow-sm border-b border-base-200">
-        <div class="container mx-auto flex justify-between">
+      <nav class="navbar bg-base-100 px-4 sm:px-6 lg:px-8 shadow-sm border-b border-base-200 sticky top-0 z-40">
+        <div class="container mx-auto flex justify-between items-center">
           <div class="flex-1">
             <.link
               navigate="/"
@@ -144,13 +144,13 @@ defmodule MethodKnowWeb.Layouts do
               <div class="size-9 rounded-full bg-black text-white flex items-center justify-center">
                 <Lucide.book_marked class="size-5" />
               </div>
-              <span class="font-semibold tracking-tight">Method Know</span>
+              <span class="font-semibold tracking-tight hidden sm:inline">Method Know</span>
             </.link>
           </div>
           <div class="flex gap-4 items-center">
             <%= if @current_scope && @current_scope.user do %>
               <%= unless @hide_navbar_action do %>
-                <.button class="lg:px-10 lg:py-2" variant="primary" phx-click="show_form">
+                <.button class="lg:px-10 lg:py-2" variant="primary" phx-click="show_drawer">
                   Share Resource
                 </.button>
               <% else %>

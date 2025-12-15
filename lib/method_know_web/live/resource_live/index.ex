@@ -28,7 +28,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        selected_types: [],
        selected_tags: [],
        show_delete_modal: false,
-       show_form: false,
+       show_drawer: false,
        show_share_button: System.get_env("SHOW_SHARE_BUTTON") == "true",
        search: "",
        tags: [],
@@ -62,7 +62,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
                 id="share-resource-btn"
                 class="lg:px-10 lg:py-2"
                 variant="primary"
-                phx-click="show_form"
+                phx-click="show_drawer"
               >
                 Share Resource
               </.button>
@@ -130,6 +130,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
                   current_user={@current_scope && @current_scope.user}
                   on_edit="edit"
                   on_delete="show_delete_modal"
+                  on_show="show"
                 />
               <% end %>
             </div>
@@ -149,7 +150,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         <% end %>
       </div>
 
-      <%= if @show_form do %>
+      <%= if @show_drawer do %>
         <.live_component
           module={MethodKnowWeb.ResourceLive.FormDrawer}
           id="resource-form-drawer"
@@ -335,7 +336,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        form_title: "Edit resource",
        resource: resource,
        form_params: form_params,
-       show_form: true,
+       show_drawer: true,
        tags: resource.tags || []
      )}
   end
@@ -474,6 +475,21 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply, assign(socket, :maybe_selected_types, [])}
   end
 
+  def handle_event("show", %{"id" => id}, socket) do
+    resource = Resources.get_resource!(id)
+
+    {:noreply,
+     socket
+     |> assign(
+       form_action: :show,
+       form_title: resource.title,
+       resource: resource,
+       form_params: %{},
+       show_drawer: true,
+       tags: resource.tags
+     )}
+  end
+
   def handle_event("search", %{"search" => search}, socket) do
     search = String.trim(search || "")
 
@@ -497,7 +513,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      |> assign(:delete_resource_id, id)}
   end
 
-  def handle_event("show_form", _params, socket) do
+  def handle_event("show_drawer", _params, socket) do
     {:noreply,
      socket
      |> assign(
@@ -505,7 +521,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        form_title: "Share a resource",
        form_params: %{},
        resource: nil,
-       show_form: true,
+       show_drawer: true,
        tags: []
      )}
   end
@@ -543,7 +559,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   end
 
   def handle_info(:close_drawer, socket) do
-    {:noreply, assign(socket, :show_form, false)}
+    {:noreply,
+     socket
+     |> push_event("drawer_closed", %{})
+     |> assign(:show_drawer, false)}
   end
 
   def handle_info({:form_params_updated, params}, socket) do
