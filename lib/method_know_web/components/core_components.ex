@@ -336,69 +336,44 @@ defmodule MethodKnowWeb.CoreComponents do
     """
   end
 
-  #   ~H"""
-  #   <%= unless @hide_navbar do %>
-  #     <nav class="navbar bg-base-100 px-4 sm:px-6 lg:px-8 shadow-sm border-b border-base-200">
-  #       <div class="container mx-auto flex justify-between">
-  #         <div class="flex-1">
-  #           <.link
-  #             navigate="/"
-  #             class="inline-flex items-center text-xl gap-2 text-base-content"
-  #           >
-  #             <div class="size-9 rounded-full bg-black text-white flex items-center justify-center">
-  #               <Lucide.book_marked class="size-5" />
-  #             </div>
-  #             <span class="font-semibold tracking-tight">Method Know</span>
-  #           </.link>
-  #         </div>
-  #         <div class="flex gap-4 items-center">
-  #           <%= if @current_scope && @current_scope.user do %>
-  #             <%= unless @hide_navbar_action do %>
-  #               <.button variant="primary" phx-click="show_form">Share Resource</.button>
-  #             <% end %>
-  #             <div class="dropdown dropdown-end">
-  #               <button type="button" class="btn btn-ghost gap-2 font-normal p-1">
-  #                 <.avatar name={@current_scope.user && @current_scope.user.name} />
-  #               </button>
-  #               <ul class="mt-3 z-[1] p-2 shadow-lg shadow-base-content/5 menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
-  #                 <li class="menu-title text-base-content/60 px-4 py-2 border-b border-base-content/10 mb-1">
-  #                   My Account
-  #                 </li>
-  #                 <li>
-  #                   <.link href="/users/settings" class="py-2 gap-2">
-  #                     <Lucide.settings_2 class="size-4" /> Settings
-  #                   </.link>
-  #                 </li>
-  #                 <li class="border-t border-base-content/10 mt-1 pt-1">
-  #                   <.link href="/users/log-out" method="delete" class="py-2 gap-2">
-  #                     <Lucide.log_out class="size-4" /> Log out
-  #                   </.link>
-  #                 </li>
-  #               </ul>
-  #             </div>
-  #           <% else %>
-  #             <ul class="menu menu-horizontal px-1">
-  #               <li><.link navigate="/users/register">Register</.link></li>
-  #               <li><.link navigate="/users/log-in">Log in</.link></li>
-  #             </ul>
-  #           <% end %>
-  #         </div>
-  #       </div>
-  #     </nav>
-  #   <% end %>
-  #   """
-  # end
-
-  attr :name, :string, default: "User"
+  attr :user, :map, default: nil, doc: "user struct with at least :name and :email"
   attr :class, :string, default: nil
 
   def avatar(assigns) do
+    user = assigns.user || %{}
+    name = Map.get(user, :name, "User")
+    email = Map.get(user, :email, nil)
+    seed = email_to_seed(email)
+    avatar_url = "https://api.dicebear.com/9.x/notionists/svg?seed=" <> seed
+
+    assigns = assign(assigns, name: name, email: email, avatar_url: avatar_url)
+
     ~H"""
     <div class={["flex items-center gap-2", @class]}>
-      <Lucide.circle_user class="size-7 text-base-content/70" />
+      <%= if @email do %>
+        <img
+          src={@avatar_url}
+          alt="avatar"
+          class="size-7 rounded-full bg-base-200 object-cover"
+        />
+      <% else %>
+        <Lucide.circle_user class="size-7 text-base-content/70" />
+      <% end %>
       <span class="hidden sm:inline-block font-normal">{get_first_name(@name)}</span>
     </div>
     """
+  end
+
+  # Encodes an email address as a HEX-encoded Base64 string for use as a seed value
+  defp email_to_seed(nil), do: "default"
+
+  defp email_to_seed(email) when is_binary(email) do
+    base64 = Base.encode64(email)
+
+    base64
+    |> :binary.bin_to_list()
+    |> Enum.map(&Integer.to_string(&1, 16))
+    |> Enum.join("")
   end
 
   defp get_first_name(nil), do: "User"

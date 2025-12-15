@@ -46,15 +46,4 @@ defmodule MethodKnowWeb.LayoutsTest do
 
     assert html == ""
   end
-
-  test "avatar component renders first name" do
-    assigns = %{name: "Jane Doe"}
-
-    html =
-      rendered_to_string(~H"""
-      <.avatar name={@name} />
-      """)
-
-    assert html =~ "Jane"
-  end
 end

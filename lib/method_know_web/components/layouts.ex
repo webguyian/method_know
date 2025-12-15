@@ -158,7 +158,7 @@ defmodule MethodKnowWeb.Layouts do
               <% end %>
               <div class="dropdown dropdown-end">
                 <button type="button" class="btn btn-ghost gap-2 font-normal p-2">
-                  <.avatar name={@current_scope.user && @current_scope.user.name} />
+                  <.avatar user={@current_scope.user} />
                 </button>
                 <ul class="mt-3 z-[1] p-2 shadow-lg shadow-base-content/5 menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
                   <li class="menu-title text-base-content/60 px-4 py-2 border-b border-base-content/10 mb-1">

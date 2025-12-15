@@ -66,7 +66,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
         </div>
       </div>
       <footer class="flex items-center justify-between mt-auto px-4 py-3 bg-slate-50 border-t border-slate-100">
-        <.avatar name={@resource.user.name} />
+        <.avatar user={@resource.user} />
         <span class="text-xs text-slate-500">{relative_date(@resource.inserted_at)}</span>
       </footer>
     </div>
