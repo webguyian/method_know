@@ -70,7 +70,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           </:actions>
         </.header>
 
-        <%= if @resources_empty? and @search == "" do %>
+        <%= if @resources_empty? and @search == "" and Enum.empty?(@selected_tags) and Enum.empty?(@selected_types) do %>
           <div class="w-full flex justify-center items-center my-8">
             <div class="border border-slate-300 bg-white rounded-lg px-8 py-12 text-center shadow-sm max-w-2xl w-full">
               <div class="flex flex-col items-center gap-2">
@@ -100,7 +100,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       <% end %>
 
       <div class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-8 py-4 items-start">
-        <%= unless @resources_empty? and @search == "" do %>
+        <%= unless @resources_empty? and @search == "" and Enum.empty?(@selected_tags) and Enum.empty?(@selected_types) do %>
           <div
             class="hidden md:block md:col-span-2 lg:col-span-2 xl:col-span-2 order-none"
             id="filters-panel"
@@ -358,13 +358,16 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         |> assign(:selected_types, selected_types)
         |> assign(:maybe_selected_tags, nil)
         |> assign(:maybe_selected_types, nil)
-        |> assign(:resources_empty?, Enum.empty?(filtered))
-        |> assign(:total_resource_count, length(total))
-        |> assign(:filtered_resource_count, length(filtered))
-        |> stream(:resources, filtered, reset: true)
       end
 
-    {:noreply, socket}
+    {:noreply,
+     socket
+     |> assign(:selected_tags, selected_tags)
+     |> assign(:selected_types, selected_types)
+     |> assign(:resources_empty?, Enum.empty?(filtered))
+     |> assign(:total_resource_count, length(total))
+     |> assign(:filtered_resource_count, length(filtered))
+     |> stream(:resources, filtered, reset: true)}
   end
 
   def handle_event("filter_tag", %{"tag" => tag}, socket) do
