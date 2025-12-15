@@ -21,6 +21,7 @@ defmodule MethodKnow.ResourcesFixtures do
       })
 
     {:ok, resource} = MethodKnow.Resources.create_resource(scope, attrs)
+    resource = MethodKnow.Repo.preload(resource, :user)
     resource
   end
 end

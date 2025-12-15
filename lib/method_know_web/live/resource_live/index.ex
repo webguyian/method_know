@@ -6,6 +6,43 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   alias MethodKnow.Resources
 
   @impl true
+  def mount(_params, _session, %{assigns: %{current_scope: current_scope}} = socket) do
+    if connected?(socket) and current_scope do
+      Resources.subscribe_resources(current_scope)
+    end
+
+    my_resources? = socket.assigns.live_action == :my
+    {filtered_resources, all_resources} = get_resources_pair(socket.assigns, [], [], "")
+    resources = get_resources(socket.assigns)
+
+    {:ok,
+     socket
+     |> assign(
+       page_title: if(my_resources?, do: "Your resources", else: "Discover Resources"),
+       all_tags: Resources.list_all_tags(),
+       delete_resource_id: nil,
+       form_action: :new,
+       form_params: %{},
+       resource: nil,
+       resource_types: Resources.resource_types_with_labels(),
+       selected_types: [],
+       selected_tags: [],
+       show_delete_modal: false,
+       show_form: false,
+       show_share_button: System.get_env("SHOW_SHARE_BUTTON") == "true",
+       search: "",
+       tags: [],
+       show_filters_on_mobile: false,
+       toast_message: nil,
+       toast_visible: false,
+       resources_empty?: Enum.empty?(resources),
+       total_resource_count: length(all_resources),
+       filtered_resource_count: length(filtered_resources)
+     )
+     |> stream(:resources, filtered_resources)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
@@ -19,6 +56,18 @@ defmodule MethodKnowWeb.ResourceLive.Index do
               Explore shared knowledge from our community
             <% end %>
           </:subtitle>
+          <:actions>
+            <%= if @show_share_button do %>
+              <.button
+                id="share-resource-btn"
+                class="lg:px-10 lg:py-2"
+                variant="primary"
+                phx-click="show_form"
+              >
+                Share Resource
+              </.button>
+            <% end %>
+          </:actions>
         </.header>
 
         <%= if @resources_empty? and @search == "" do %>
@@ -227,43 +276,6 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       <span class="text-slate-800 text-base font-medium">{@message}</span>
     </div>
     """
-  end
-
-  @impl true
-  def mount(_params, _session, %{assigns: %{current_scope: current_scope}} = socket) do
-    if connected?(socket) and current_scope do
-      Resources.subscribe_resources(current_scope)
-    end
-
-    my_resources? = socket.assigns.live_action == :my
-    {filtered_resources, all_resources} = get_resources_pair(socket.assigns, [], [], "")
-
-    resources = get_resources(socket.assigns)
-
-    {:ok,
-     socket
-     |> assign(
-       page_title: if(my_resources?, do: "Your resources", else: "Discover Resources"),
-       all_tags: Resources.list_all_tags(),
-       delete_resource_id: nil,
-       form_action: :new,
-       form_params: %{},
-       resource: nil,
-       resource_types: Resources.resource_types_with_labels(),
-       selected_types: [],
-       selected_tags: [],
-       show_delete_modal: false,
-       show_form: false,
-       search: "",
-       tags: [],
-       show_filters_on_mobile: false,
-       toast_message: nil,
-       toast_visible: false,
-       resources_empty?: Enum.empty?(resources),
-       total_resource_count: length(all_resources),
-       filtered_resource_count: length(filtered_resources)
-     )
-     |> stream(:resources, filtered_resources)}
   end
 
   @impl true

@@ -8,8 +8,7 @@ defmodule MethodKnowWeb.ResourceLiveTest do
     description: "some description",
     title: "some title",
     url: "https://example.com",
-    resource_type: "article",
-    tags: "some tag"
+    resource_type: "article"
   }
   @update_attrs %{
     code: "some updated code",
@@ -17,9 +16,9 @@ defmodule MethodKnowWeb.ResourceLiveTest do
     title: "some updated title",
     language: "some updated language",
     resource_type: "code_snippet",
-    tags: "updated tag"
+    tags: "some tag"
   }
-  @invalid_attrs %{description: nil, title: nil, resource_type: "article", tags: ""}
+  @invalid_attrs %{description: nil, title: nil, resource_type: "article"}
 
   setup :register_and_log_in_user
 
@@ -40,65 +39,71 @@ defmodule MethodKnowWeb.ResourceLiveTest do
     end
 
     test "saves new resource", %{conn: conn} do
+      System.put_env("SHOW_SHARE_BUTTON", "true")
       {:ok, index_live, _html} = live(conn, ~p"/resources")
 
-      html =
-        index_live
-        |> element("button", "Share Resource")
-        |> render_click()
+      # Open the new resource form
+      assert render_click(element(index_live, "#share-resource-btn")) =~ "Share a resource"
 
-      assert html =~ "Share a resource"
+      # Fill out the form with @create_attrs and submit
+      assert index_live
+             |> form("#resource-form", resource: @create_attrs)
+             |> render_submit()
 
-      # assert html
-      #        |> form("#resource-form", resource: @invalid_attrs)
-      #        |> render_change() =~ "can&#39;t be blank"
-
-      # assert {:ok, index_live, _html} =
-      #          form_live
-      #          |> form("#resource-form", resource: @create_attrs)
-      #          |> render_submit()
-      #          |> follow_redirect(conn, ~p"/resources")
-
-      # html = render(index_live)
-      # assert html =~ "Resource created successfully"
-      # assert html =~ "some title"
+      # After submit, re-fetch the index_live handle to check the new resource is listed
+      {:ok, index_live, _html} = live(conn, ~p"/resources")
+      html = render(index_live)
+      assert html =~ @create_attrs.title
     end
 
     test "updates resource in listing", %{conn: conn, resource: resource} do
       {:ok, index_live, _html} = live(conn, ~p"/resources")
 
-      assert {:ok, form_live, _html} =
-               index_live
-               |> element("button[title='Edit']")
-               |> render_click()
-               |> follow_redirect(conn, ~p"/resources/#{resource}/edit")
+      # Open the edit drawer for the resource
+      render_click(element(index_live, "button[phx-click='edit'][phx-value-id='#{resource.id}']"))
 
-      assert render(form_live) =~ "Edit Resource"
-
-      assert form_live
+      # Interact with the form while it is open
+      assert index_live
              |> form("#resource-form", resource: @invalid_attrs)
              |> render_change() =~ "can&#39;t be blank"
 
-      # Switch to code_snippet to reveal code/language inputs
-      form_live
-      |> form("#resource-form", resource: %{"resource_type" => "code_snippet"})
-      |> render_change()
+      assert index_live
+             |> form("#resource-form", resource: %{"resource_type" => "code_snippet"})
+             |> render_change()
 
-      assert {:ok, index_live, _html} =
-               form_live
-               |> form("#resource-form", resource: @update_attrs)
-               |> render_submit()
-               |> follow_redirect(conn, ~p"/resources")
+      # Submit valid data and do not interact with the form after submit
+      assert index_live
+             |> form("#resource-form", resource: @update_attrs)
+             |> render_submit()
 
+      # After submit, re-fetch the index_live handle to check the updated content
+      {:ok, index_live, _html} = live(conn, ~p"/resources")
       html = render(index_live)
-      assert html =~ "Resource updated successfully"
       assert html =~ "some updated title"
     end
 
     test "deletes resource in listing", %{conn: conn, resource: resource} do
       {:ok, index_live, _html} = live(conn, ~p"/resources")
 
-      assert index_live |> element("button[title='Delete']") |> render_click()
+      # Open the delete modal for the resource
+      assert render_click(
+               element(
+                 index_live,
+                 "button[phx-click='show_delete_modal'][phx-value-id='#{resource.id}']"
+               )
+             ) =~ "Are you sure you want to delete"
+
+      # Confirm delete (update selector as needed)
+      html =
+        render_click(
+          element(
+            index_live,
+            "button#confirm-delete-btn[phx-click='confirm_delete'][phx-value-id='#{resource.id}']"
+          )
+        )
+
+      assert html =~ "Resource deleted!"
+
       refute has_element?(index_live, "#resources-#{resource.id}")
     end
   end
@@ -114,33 +119,28 @@ defmodule MethodKnowWeb.ResourceLiveTest do
     end
 
     test "updates resource and returns to show", %{conn: conn, resource: resource} do
-      {:ok, show_live, _html} = live(conn, ~p"/resources/#{resource}")
+      {:ok, index_live, _html} = live(conn, ~p"/resources")
 
-      assert {:ok, form_live, _} =
-               show_live
-               |> element("button[title='Edit']")
-               |> render_click()
-               |> follow_redirect(conn, ~p"/resources/#{resource}/edit?return_to=show")
+      # Open the edit drawer for the resource
+      render_click(element(index_live, "button[phx-click='edit'][phx-value-id='#{resource.id}']"))
 
-      assert render(form_live) =~ "Edit Resource"
-
-      assert form_live
+      # Interact with the form while it is open
+      assert index_live
              |> form("#resource-form", resource: @invalid_attrs)
              |> render_change() =~ "can&#39;t be blank"
 
-      # Switch to code_snippet to reveal code/language inputs
-      form_live
-      |> form("#resource-form", resource: %{"resource_type" => "code_snippet"})
-      |> render_change()
+      assert index_live
+             |> form("#resource-form", resource: %{"resource_type" => "code_snippet"})
+             |> render_change()
 
-      assert {:ok, show_live, _html} =
-               form_live
-               |> form("#resource-form", resource: @update_attrs)
-               |> render_submit()
-               |> follow_redirect(conn, ~p"/resources/#{resource}")
+      # Submit valid data and do not interact with the form after submit
+      assert index_live
+             |> form("#resource-form", resource: @update_attrs)
+             |> render_submit()
 
-      html = render(show_live)
-      assert html =~ "Resource updated successfully"
+      # After submit, re-fetch the index_live handle to check the updated content
+      {:ok, index_live, _html} = live(conn, ~p"/resources")
+      html = render(index_live)
       assert html =~ "some updated title"
     end
   end

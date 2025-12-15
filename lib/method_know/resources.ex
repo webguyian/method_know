@@ -93,7 +93,9 @@ defmodule MethodKnow.Resources do
 
   """
   def get_resource!(%Scope{} = scope, id) do
-    Repo.get_by!(Resource, id: id, user_id: scope.user.id)
+    Resource
+    |> Repo.get_by!(id: id, user_id: scope.user.id)
+    |> Repo.preload(:user)
   end
 
   @doc """
