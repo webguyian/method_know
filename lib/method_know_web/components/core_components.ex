@@ -34,6 +34,24 @@ defmodule MethodKnowWeb.CoreComponents do
   alias MethodKnow.Resources.Resource
 
   @doc """
+  Renders a code snippet with syntax highlighting.
+  Expects assigns:
+    - code: the code string to render
+    - language: the language for syntax highlighting (e.g., "elixir", "python", "javascript")
+    - id: optional DOM id for the code block
+  """
+  attr :code, :string, required: true
+  attr :language, :string, required: true
+  attr :id, :string, default: nil
+  attr :class, :string, default: nil
+
+  def code_snippet(assigns) do
+    ~H"""
+    <pre id={@id} class={["rounded-lg overflow-x-auto bg-slate-900 text-white text-sm", @class]}><code class={"language-#{@language}"}>{@code}</code></pre>
+    """
+  end
+
+  @doc """
   Renders flash notices.
 
   ## Examples

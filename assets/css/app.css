@@ -6,6 +6,8 @@
 @source "../js";
 @source "../../lib/method_know_web";
 
+@import '../vendor/highlight/styles/atom-one-dark.min.css';
+
 /* A Tailwind plugin that makes "hero-#{ICON}" classes available.
    The heroicons installation itself is managed by your mix.exs */
 @plugin "../vendor/heroicons";

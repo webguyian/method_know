@@ -47,6 +47,13 @@ defmodule MethodKnowWeb.ResourceCardComponent do
         <p class="text-slate-700 text-sm mb-2">
           {truncate_description(@resource.description)}
         </p>
+        <%= if @resource.resource_type == "code_snippet" do %>
+          <.code_snippet
+            class="max-h-[250px]"
+            code={@resource.code}
+            language={@resource.language}
+          />
+        <% end %>
         <%= if @resource.author do %>
           <div class="flex items-center gap-2 text-slate-500 text-xs mb-2">
             <Lucide.book_open_text class="size-4" /> by {@resource.author}
@@ -55,9 +62,9 @@ defmodule MethodKnowWeb.ResourceCardComponent do
         <%= if @resource.url do %>
           <.resource_link resource={@resource} />
         <% end %>
-        <div class="mt-auto flex flex-wrap gap-1 mb-2">
+        <div class="mt-4 flex flex-wrap gap-1 mb-2">
           <%= for tag <- (@resource.tags || []) do %>
-            <span class="badge badge-xs border-neutral-300 bg-transparent text-base-content p-2 rounded-full">
+            <span class="badge badge-sm border-neutral-300 bg-transparent text-base-content p-2 rounded-full">
               {tag}
             </span>
           <% end %>

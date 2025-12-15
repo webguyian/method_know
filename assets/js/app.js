@@ -24,7 +24,9 @@ import { Socket } from 'phoenix';
 import { LiveSocket } from 'phoenix_live_view';
 import { hooks as colocatedHooks } from 'phoenix-colocated/method_know';
 import topbar from '../vendor/topbar';
+
 import { tagFilter } from './tag_filter';
+import './highlight';
 
 const csrfToken = document
   .querySelector("meta[name='csrf-token']")
