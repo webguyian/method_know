@@ -110,6 +110,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
               selected_types={@selected_types}
               all_tags={@all_tags}
               selected_tags={@selected_tags}
+              id="desktop-filter-panel"
             />
           </div>
           <div class="md:col-span-4 lg:col-span-5 xl:col-span-6">
@@ -145,6 +146,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
               all_tags={@all_tags}
               selected_tags={@maybe_selected_tags || @selected_tags}
               show_mobile_modal={true}
+              id="mobile-filter-panel"
             />
           </div>
         <% end %>

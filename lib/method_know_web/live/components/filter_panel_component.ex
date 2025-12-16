@@ -6,6 +6,7 @@ defmodule MethodKnowWeb.FilterPanelComponent do
   attr :all_tags, :list, required: true
   attr :selected_tags, :list, required: true
   attr :show_mobile_modal, :boolean, default: false
+  attr :id, :string, default: "filter-panel"
 
   def filter_panel(assigns) do
     ~H"""
@@ -15,11 +16,12 @@ defmodule MethodKnowWeb.FilterPanelComponent do
         @show_mobile_modal &&
           "!sticky !top-10 !col-span-1 w-full max-w-md mx-auto mt-6 animate-fade-in"
       ]}
-      phx-click-away="toggle_filters"
+      id={@id}
+      phx-click-away={@show_mobile_modal && "toggle_filters"}
     >
       <header class="flex items-center justify-between">
         <h2 class="text-lg font-semibold">Filters</h2>
-        <%= if @selected_types != [] or @selected_tags != [] do %>
+        <%= if not Enum.empty?(@selected_types) or not Enum.empty?(@selected_tags) do %>
           <button
             class="text-sm text-base-content underline underline-offset-4 hover:text-base-content/80 hover:no-underline transition-colors"
             id="reset-filters-btn"
