@@ -1,4 +1,61 @@
 defmodule MethodKnow.Resources do
+  import Ecto.Query
+  alias MethodKnow.ResourceInteraction
+
+  @like_type "like"
+
+  @doc """
+  Returns the number of likes for a resource.
+  """
+  def count_likes(resource_id) do
+    ResourceInteraction
+    |> Ecto.Query.where(
+      [ri],
+      field(ri, :resource_id) == ^resource_id and field(ri, :type) == @like_type
+    )
+    |> MethodKnow.Repo.aggregate(:count, :id)
+  end
+
+  @doc """
+  Returns true if the user has liked the resource.
+  """
+  def liked_by_user?(resource_id, user_id) do
+    ResourceInteraction
+    |> Ecto.Query.where(
+      [ri],
+      field(ri, :resource_id) == ^resource_id and field(ri, :user_id) == ^user_id and
+        field(ri, :type) == @like_type
+    )
+    |> MethodKnow.Repo.exists?()
+  end
+
+  @doc """
+  Like a resource for a user. Returns {:ok, interaction} or {:error, changeset}.
+  """
+  def like_resource(resource_id, user_id) do
+    %ResourceInteraction{}
+    |> ResourceInteraction.changeset(%{
+      resource_id: resource_id,
+      user_id: user_id,
+      type: @like_type,
+      payload: nil
+    })
+    |> MethodKnow.Repo.insert(on_conflict: :nothing)
+  end
+
+  @doc """
+  Unlike a resource for a user. Returns {:ok, count} of deleted rows.
+  """
+  def unlike_resource(resource_id, user_id) do
+    ResourceInteraction
+    |> Ecto.Query.where(
+      [ri],
+      field(ri, :resource_id) == ^resource_id and field(ri, :user_id) == ^user_id and
+        field(ri, :type) == @like_type
+    )
+    |> MethodKnow.Repo.delete_all()
+  end
+
   @moduledoc """
   The Resources context.
   """

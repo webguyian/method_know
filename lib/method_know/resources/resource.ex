@@ -16,6 +16,7 @@ defmodule MethodKnow.Resources.Resource do
     field :url, :string
 
     belongs_to :user, MethodKnow.Accounts.User
+    has_many :resource_interactions, MethodKnow.ResourceInteraction
 
     timestamps(type: :utc_datetime)
   end

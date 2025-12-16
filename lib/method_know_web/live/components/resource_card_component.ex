@@ -71,6 +71,16 @@ defmodule MethodKnowWeb.ResourceCardComponent do
             </span>
           <% end %>
         </div>
+        <.live_component
+          module={MethodKnowWeb.LikeButtonComponent}
+          id={"like-btn-#{@resource.id}"}
+          resource={@resource}
+          current_user={@current_user}
+          likes_count={MethodKnow.Resources.count_likes(@resource.id)}
+          liked_by_user={
+            @current_user && MethodKnow.Resources.liked_by_user?(@resource.id, @current_user.id)
+          }
+        />
       </div>
       <footer class="mt-auto hover:bg-base-200 border-t border-base-200 transition-colors">
         <button
