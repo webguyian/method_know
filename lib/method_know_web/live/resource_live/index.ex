@@ -33,6 +33,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        show_filters_on_mobile: false,
        toast_message: nil,
        toast_visible: false,
+       toast_action: nil,
        # Defaults, will be updated by handle_params
        current_path: nil,
        resources_empty?: false,
@@ -70,7 +71,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <%= if @toast_visible do %>
-        <.toast message={@toast_message} />
+        <.toast message={@toast_message} action={@toast_action} />
       <% else %>
         <.header>
           {@page_title}
@@ -294,12 +295,25 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   # Inline toast component
   attr :message, :string, required: true
+  attr :action, :atom, default: nil
 
   def toast(assigns) do
     ~H"""
-    <div class="w-full bg-white border border-slate-300 rounded-md flex items-center p-4 mb-4 shadow-sm animate-fade-in">
-      <Lucide.check class="size-9 mr-3 flex-shrink-0 text-black" />
-      <span class="text-slate-800 text-base font-medium">{@message}</span>
+    <div
+      id="toast-message"
+      tabindex="-1"
+      phx-mounted={JS.focus()}
+      class="w-full bg-white border border-slate-300 rounded-md flex items-center justify-between p-4 mb-4 shadow-sm animate-fade-in outline-none"
+    >
+      <div class="flex items-center">
+        <Lucide.check class="size-9 mr-3 flex-shrink-0 text-black" />
+        <span class="text-slate-800 text-base font-medium">{@message}</span>
+      </div>
+      <%= if @action == :created do %>
+        <.link navigate={~p"/my/resources"} class="btn btn-primary">
+          View Your Resources
+        </.link>
+      <% end %>
     </div>
     """
   end
@@ -517,14 +531,18 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   end
 
   def handle_info(:hide_toast, socket) do
-    {:noreply, socket |> assign(:toast_visible, false) |> assign(:toast_message, nil)}
+    {:noreply,
+     socket
+     |> assign(:toast_visible, false)
+     |> assign(:toast_message, nil)
+     |> assign(:toast_action, nil)}
   end
 
   def handle_info({:resource_saved, :created}, socket) do
     socket =
       socket
       |> update_all_tags()
-      |> show_toast("New resource successfully added!")
+      |> show_toast("New resource successfully added!", :created)
 
     {:noreply, socket}
   end
@@ -622,11 +640,13 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     |> String.contains?(search)
   end
 
-  defp show_toast(socket, message) do
-    Process.send_after(self(), :hide_toast, 3000)
+  defp show_toast(socket, message, action \\ nil) do
+    timeout = if action == :created, do: 6000, else: 3000
+    Process.send_after(self(), :hide_toast, timeout)
 
     socket
     |> assign(:toast_message, message)
+    |> assign(:toast_action, action)
     |> assign(:toast_visible, true)
   end
 
