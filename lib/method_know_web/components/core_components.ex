@@ -656,6 +656,45 @@ defmodule MethodKnowWeb.CoreComponents do
     """
   end
 
+  @doc """
+  Renders a tag filter button with consistent styles and active/hover logic.
+
+  ## Assigns
+    * label - the tag label (required)
+    * active - boolean, whether the tag is active (required)
+    * click - the phx-click event (required)
+    * phx_value_tag - the tag value for phx-value-tag (optional)
+    * class - extra classes (optional)
+    * rest - global attrs
+  """
+  attr :tag, :string, required: true
+  attr :active, :boolean, required: true
+  attr :click, :any, required: true
+  attr :class, :string, default: nil
+  attr :rest, :global
+
+  def tag_button(assigns) do
+    ~H"""
+    <button
+      type="button"
+      phx-click={@click}
+      phx-value-tag={@tag}
+      class={[
+        "badge badge-sm rounded-full cursor-pointer p-2 transition-colors",
+        if(@active,
+          do: "badge-primary",
+          else:
+            "border-base-content/20 bg-transparent text-base-content/80 hover:bg-base-300 hover:text-base-content"
+        ),
+        @class
+      ]}
+      {@rest}
+    >
+      {@tag}
+    </button>
+    """
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do

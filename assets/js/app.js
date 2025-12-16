@@ -25,7 +25,6 @@ import { LiveSocket } from 'phoenix_live_view';
 import { hooks as colocatedHooks } from 'phoenix-colocated/method_know';
 import topbar from '../vendor/topbar';
 
-import { tagFilter } from './tag_filter';
 import './highlight';
 
 const csrfToken = document
@@ -34,7 +33,7 @@ const csrfToken = document
 const liveSocket = new LiveSocket('/live', Socket, {
   longPollFallbackMs: 2500,
   params: { _csrf_token: csrfToken },
-  hooks: { ...colocatedHooks, tagFilter }
+  hooks: { ...colocatedHooks }
 });
 
 // Show progress bar on live navigation and form submits

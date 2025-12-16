@@ -66,9 +66,11 @@ defmodule MethodKnowWeb.ResourceCardComponent do
         <% end %>
         <div class="mt-4 flex flex-wrap gap-1 mb-2">
           <%= for tag <- (@resource.tags || []) do %>
-            <span class="badge badge-sm border-base-content/20 bg-transparent text-base-content/80 p-2 rounded-full">
-              {tag}
-            </span>
+            <.tag_button
+              tag={tag}
+              active={assigns[:selected_tags] && tag in assigns.selected_tags}
+              click="filter_tag"
+            />
           <% end %>
         </div>
         <.live_component

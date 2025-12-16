@@ -1,6 +1,8 @@
 defmodule MethodKnowWeb.FilterPanelComponent do
   use Phoenix.Component
 
+  import MethodKnowWeb.CoreComponents
+
   attr :resource_types, :list, required: true
   attr :selected_types, :list, required: true
   attr :all_tags, :list, required: true
@@ -61,20 +63,11 @@ defmodule MethodKnowWeb.FilterPanelComponent do
           </h3>
           <div class="flex flex-wrap gap-2">
             <%= for tag <- @all_tags do %>
-              <button
-                type="button"
-                phx-click={if @show_mobile_modal, do: "maybe_filter_tag", else: "filter_tag"}
-                phx-value-tag={tag}
-                class={[
-                  "badge rounded-full cursor-pointer ",
-                  if(tag in @selected_tags,
-                    do: "badge-primary",
-                    else: "border-base-content/20 bg-transparent text-base-content/80"
-                  )
-                ]}
-              >
-                {tag}
-              </button>
+              <.tag_button
+                tag={tag}
+                active={tag in @selected_tags}
+                click={if @show_mobile_modal, do: "maybe_filter_tag", else: "filter_tag"}
+              />
             <% end %>
           </div>
         </section>

@@ -153,6 +153,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
                   id={id}
                   resource={resource}
                   current_user={@current_scope && @current_scope.user}
+                  selected_tags={@selected_tags}
                   on_edit="edit"
                   on_delete="show_delete_modal"
                   on_show="show"
@@ -187,6 +188,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           on_close="hide_form"
           all_tags={@all_tags}
           tags={@tags}
+          selected_tags={@selected_tags}
           form_action={@form_action}
           form_params={@form_params}
         />
