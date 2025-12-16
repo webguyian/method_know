@@ -13,7 +13,7 @@ config :method_know, MethodKnowWeb.Endpoint,
 config :method_know, MethodKnowWeb.Endpoint,
   force_ssl: [hsts: true, rewrite_on: [:x_forwarded_proto]],
   server: true,
-  check_origin: ["//bakeoff.run.place"]
+  check_origin: ["//know.run.place"]
 
 # Configure Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Req
