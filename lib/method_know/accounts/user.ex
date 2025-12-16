@@ -30,6 +30,19 @@ defmodule MethodKnow.Accounts.User do
     |> validate_email(opts)
   end
 
+  @doc """
+  A user changeset for changing both name and email at once.
+
+  Validates both fields and supports options for email validation.
+  """
+  def name_email_changeset(user, attrs, opts \\ []) do
+    user
+    |> cast(attrs, [:name, :email])
+    |> validate_required([:name, :email])
+    |> validate_length(:name, min: 1, max: 160)
+    |> validate_email(opts)
+  end
+
   defp validate_email(changeset, opts) do
     changeset =
       changeset

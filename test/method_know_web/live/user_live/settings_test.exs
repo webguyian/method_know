@@ -13,7 +13,7 @@ defmodule MethodKnowWeb.UserLive.SettingsTest do
         |> log_in_user(user_fixture())
         |> live(~p"/users/settings")
 
-      assert html =~ "Change Email"
+      assert html =~ "Save Changes"
       assert html =~ "Save Password"
     end
 
@@ -51,27 +51,27 @@ defmodule MethodKnowWeb.UserLive.SettingsTest do
 
       result =
         lv
-        |> form("#email_form", %{
-          "user" => %{"email" => new_email}
+        |> form("#name_email_form", %{
+          "user" => %{"name" => user.name, "email" => new_email}
         })
         |> render_submit()
 
-      assert result =~ "A link to confirm your email"
-      assert Accounts.get_user_by_email(user.email)
+      assert result =~ "Name and email updated successfully"
+      assert Accounts.get_user_by_email(new_email)
+      refute Accounts.get_user_by_email(user.email)
     end
 
-    test "renders errors with invalid data (phx-change)", %{conn: conn} do
+    test "renders errors with invalid data (phx-change)", %{conn: conn, user: user} do
       {:ok, lv, _html} = live(conn, ~p"/users/settings")
 
       result =
         lv
-        |> element("#email_form")
+        |> element("#name_email_form")
         |> render_change(%{
-          "action" => "update_email",
-          "user" => %{"email" => "with spaces"}
+          "user" => %{"name" => user.name, "email" => "with spaces"}
         })
 
-      assert result =~ "Change Email"
+      assert result =~ "Save Changes"
       assert result =~ "must have the @ sign and no spaces"
     end
 
@@ -80,13 +80,13 @@ defmodule MethodKnowWeb.UserLive.SettingsTest do
 
       result =
         lv
-        |> form("#email_form", %{
-          "user" => %{"email" => user.email}
+        |> form("#name_email_form", %{
+          "user" => %{"name" => user.name, "email" => "with spaces"}
         })
         |> render_submit()
 
-      assert result =~ "Change Email"
-      assert result =~ "did not change"
+      assert result =~ "Save Changes"
+      assert result =~ "must have the @ sign and no spaces"
     end
   end
 

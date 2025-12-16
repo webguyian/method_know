@@ -96,6 +96,35 @@ defmodule MethodKnow.Accounts do
     User.registration_changeset(user, attrs, opts)
   end
 
+  @doc """
+  Returns an `%Ecto.Changeset{}` for changing the user name and email together.
+
+  ## Examples
+
+      iex> change_user_name_email(user)
+      %Ecto.Changeset{data: %User{}}
+  """
+  def change_user_name_email(user, attrs \\ %{}, opts \\ []) do
+    User.name_email_changeset(user, attrs, opts)
+  end
+
+  @doc """
+  Updates the user name and email together.
+
+  ## Examples
+
+      iex> update_user_name_email(user, %{name: "New Name", email: "new@email.com"})
+      {:ok, %User{}}
+
+      iex> update_user_name_email(user, %{name: "", email: "bad"})
+      {:error, %Ecto.Changeset{}}
+  """
+  def update_user_name_email(user, attrs, opts \\ []) do
+    user
+    |> User.name_email_changeset(attrs, opts)
+    |> Repo.update()
+  end
+
   ## Settings
 
   @doc """

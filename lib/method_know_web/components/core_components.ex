@@ -429,6 +429,7 @@ defmodule MethodKnowWeb.CoreComponents do
     """
   end
 
+  attr :show_name, :boolean, default: true, doc: "whether to show the user's first name"
   attr :user, :map, default: nil, doc: "user struct with at least :name and :email"
   attr :class, :string, default: nil
 
@@ -436,29 +437,36 @@ defmodule MethodKnowWeb.CoreComponents do
     user = assigns.user || %{}
     name = Map.get(user, :name, "User")
     email = Map.get(user, :email, nil)
-    seed = email_to_seed(email)
-    avatar_url = "https://api.dicebear.com/9.x/notionists/svg?seed=" <> seed
+    avatar_url = get_avatar_url(email)
 
-    assigns = assign(assigns, name: name, email: email, avatar_url: avatar_url)
+    assigns =
+      assign(assigns, name: name, email: email, avatar_url: avatar_url)
 
     ~H"""
-    <div class={["flex items-center gap-2", @class]}>
+    <div class="flex items-center gap-2">
       <%= if @email do %>
         <img
           src={@avatar_url}
           alt="avatar"
-          class="size-7 rounded-full bg-base-200 object-cover"
+          class={"#{@class || "size-7"} rounded-full border border-base-300 bg-base-200 object-cover"}
         />
       <% else %>
         <Lucide.circle_user class="size-7 text-base-content/70" />
       <% end %>
-      <span class="hidden sm:inline-block font-normal">{get_first_name(@name)}</span>
+      <%= if @show_name do %>
+        <span class="hidden sm:inline-block font-normal">{get_first_name(@name)}</span>
+      <% end %>
     </div>
     """
   end
 
+  defp get_avatar_url(email) do
+    seed = email_to_seed(email)
+    "https://api.dicebear.com/9.x/notionists/svg?seed=" <> seed
+  end
+
   # Encodes an email address as a HEX-encoded Base64 string for use as a seed value
-  defp email_to_seed(nil), do: "default"
+  defp email_to_seed(nil), do: "anonymous"
 
   defp email_to_seed(email) when is_binary(email) do
     base64 = Base.encode64(email)

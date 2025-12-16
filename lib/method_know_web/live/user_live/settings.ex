@@ -14,29 +14,36 @@ defmodule MethodKnowWeb.UserLive.Settings do
         <:subtitle>Manage your account and profile settings</:subtitle>
       </.header>
 
-      <div class="max-w-lg border border-base-content/20 p-6 rounded-xl">
-        <.form for={@email_form} id="email_form" phx-submit="update_email" phx-change="validate_email">
-          <.input
-            field={@email_form[:email]}
-            type="email"
-            label="Email"
-            autocomplete="username"
-            required
-          />
-          <.button variant="primary" phx-disable-with="Changing...">Change Email</.button>
-        </.form>
+      <div class="flex-1 min-w-0 max-w-lg border border-base-content/20 p-6 rounded-xl bg-base-100 shadow-sm">
+        <div class="flex items-center gap-4 mb-6">
+          <.avatar user={@current_scope.user} class="w-32" show_name={false} />
+          <div>
+            <p><strong class="text-lg">{@current_scope.user.name}</strong></p>
+            <p class="text-sm text-base-content/70">{@current_scope.user.email}</p>
+          </div>
+        </div>
 
-        <div class="divider" />
-
-        <.form for={@name_form} id="name_form" phx-submit="update_name" phx-change="validate_name">
+        <.form
+          for={@name_email_form}
+          id="name_email_form"
+          phx-submit="update_name_email"
+          phx-change="validate_name_email"
+        >
           <.input
-            field={@name_form[:name]}
+            field={@name_email_form[:name]}
             type="text"
             label="Name"
             autocomplete="name"
             required
           />
-          <.button variant="primary" phx-disable-with="Saving...">Save Name</.button>
+          <.input
+            field={@name_email_form[:email]}
+            type="email"
+            label="Email"
+            autocomplete="username"
+            required
+          />
+          <.button class="mt-2" variant="primary" phx-disable-with="Saving...">Save Changes</.button>
         </.form>
 
         <div class="divider" />
@@ -70,7 +77,7 @@ defmodule MethodKnowWeb.UserLive.Settings do
             label="Confirm new password"
             autocomplete="new-password"
           />
-          <.button variant="primary" phx-disable-with="Saving...">
+          <.button class="mt-2" variant="primary" phx-disable-with="Saving...">
             Save Password
           </.button>
         </.form>
@@ -95,15 +102,13 @@ defmodule MethodKnowWeb.UserLive.Settings do
 
   def mount(_params, _session, socket) do
     user = socket.assigns.current_scope.user
-    email_changeset = Accounts.change_user_email(user, %{}, validate_unique: false)
-    name_changeset = Accounts.change_user_name(user, %{})
+    name_email_changeset = Accounts.change_user_name_email(user, %{}, validate_unique: false)
     password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
 
     socket =
       socket
       |> assign(:current_email, user.email)
-      |> assign(:email_form, to_form(email_changeset))
-      |> assign(:name_form, to_form(name_changeset))
+      |> assign(:name_email_form, to_form(name_email_changeset))
       |> assign(:password_form, to_form(password_changeset))
       |> assign(:trigger_submit, false)
       |> assign(:hide_navbar_action, true)
@@ -112,63 +117,37 @@ defmodule MethodKnowWeb.UserLive.Settings do
   end
 
   @impl true
-  def handle_event("validate_email", params, socket) do
+
+  def handle_event("validate_name_email", params, socket) do
     %{"user" => user_params} = params
 
-    email_form =
+    name_email_form =
       socket.assigns.current_scope.user
-      |> Accounts.change_user_email(user_params, validate_unique: false)
+      |> Accounts.change_user_name_email(user_params, validate_unique: false)
       |> Map.put(:action, :validate)
       |> to_form()
 
-    {:noreply, assign(socket, email_form: email_form)}
+    {:noreply, assign(socket, name_email_form: name_email_form)}
   end
 
-  def handle_event("update_email", params, socket) do
+  def handle_event("update_name_email", params, socket) do
     %{"user" => user_params} = params
     user = socket.assigns.current_scope.user
     true = Accounts.sudo_mode?(user)
 
-    case Accounts.change_user_email(user, user_params) do
-      %{valid?: true} = changeset ->
-        Accounts.deliver_user_update_email_instructions(
-          Ecto.Changeset.apply_action!(changeset, :insert),
-          user.email,
-          &url(~p"/users/settings/confirm-email/#{&1}")
-        )
+    case Accounts.update_user_name_email(user, user_params, validate_unique: false) do
+      {:ok, updated_user} ->
+        # Update current_scope with the new user struct
+        current_scope = %{socket.assigns.current_scope | user: updated_user}
+        info = "Name and email updated successfully."
 
-        info = "A link to confirm your email change has been sent to the new address."
-        {:noreply, socket |> put_flash(:info, info)}
-
-      changeset ->
-        {:noreply, assign(socket, :email_form, to_form(changeset, action: :insert))}
-    end
-  end
-
-  def handle_event("validate_name", params, socket) do
-    %{"user" => user_params} = params
-
-    name_form =
-      socket.assigns.current_scope.user
-      |> Accounts.change_user_name(user_params)
-      |> Map.put(:action, :validate)
-      |> to_form()
-
-    {:noreply, assign(socket, name_form: name_form)}
-  end
-
-  def handle_event("update_name", params, socket) do
-    %{"user" => user_params} = params
-    user = socket.assigns.current_scope.user
-    true = Accounts.sudo_mode?(user)
-
-    case Accounts.update_user_name(user, user_params) do
-      {:ok, _user} ->
-        info = "Name updated successfully."
-        {:noreply, socket |> put_flash(:info, info)}
+        {:noreply,
+         socket
+         |> assign(:current_scope, current_scope)
+         |> put_flash(:info, info)}
 
       {:error, changeset} ->
-        {:noreply, assign(socket, :name_form, to_form(changeset, action: :insert))}
+        {:noreply, assign(socket, :name_email_form, to_form(changeset, action: :insert))}
     end
   end
 
