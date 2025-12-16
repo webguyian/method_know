@@ -27,8 +27,13 @@ defmodule MethodKnow.Resources.Resource do
     |> validate_required([:title, :resource_type])
     |> validate_inclusion(:resource_type, Resources.resource_types())
     |> validate_required_by_type()
-    |> put_change(:user_id, user_scope.user.id)
+    |> maybe_put_user_id(user_scope)
   end
+
+  defp maybe_put_user_id(changeset, nil), do: changeset
+
+  defp maybe_put_user_id(changeset, %{user: %{id: user_id}}),
+    do: put_change(changeset, :user_id, user_id)
 
   defp validate_required_by_type(changeset) do
     [article, code_snippet, learning_resource] = Resources.resource_types()

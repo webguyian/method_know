@@ -183,9 +183,7 @@ defmodule MethodKnow.Resources do
       %Ecto.Changeset{data: %Resource{}}
 
   """
-  def change_resource(%Scope{} = scope, %Resource{} = resource, attrs \\ %{}) do
-    # true = resource.user_id == scope.user.id
-
+  def change_resource(scope, %Resource{} = resource, attrs \\ %{}) do
     Resource.changeset(resource, attrs, scope)
   end
 
