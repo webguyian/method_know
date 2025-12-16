@@ -150,6 +150,19 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
     end
   end
 
+  def handle_event("set_resource_type", %{"value" => type}, socket) do
+    # Merge new type into existing params
+    params = Map.put(socket.assigns.form_params || %{}, "resource_type", type)
+
+    # Send updated params to parent so it can keep form_params in sync
+    send(self(), {:form_params_updated, params})
+
+    resource = socket.assigns[:resource] || %Resource{}
+    changeset = Resources.change_resource(socket.assigns.current_scope, resource, params)
+
+    {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+  end
+
   def handle_info({:tags_updated, new_tags}, socket) do
     changeset =
       Resources.change_resource(

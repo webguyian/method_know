@@ -24,11 +24,12 @@ defmodule MethodKnowWeb.ResourceLive.FormComponent do
         phx-submit="save"
         phx-target={@myself}
       >
-        <.input
+        <.dropdown_select
           field={@form[:resource_type]}
-          type="select"
           options={Resources.resource_types_with_labels()}
           prompt="Select Resource Type"
+          change_event="set_resource_type"
+          target={@myself}
         />
         <.input
           field={@form[:title]}

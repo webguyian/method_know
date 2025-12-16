@@ -334,6 +334,79 @@ defmodule MethodKnowWeb.CoreComponents do
   end
 
   @doc """
+  Renders a custom dropdown select using DaisyUI styles.
+
+  It uses a `<details>` element for the dropdown and a hidden input for the form value.
+  Requires an standard list of options in the format `[{label, value}, ...]`.
+  """
+  attr :id, :any, default: nil
+  attr :name, :any
+  attr :label, :string, default: nil
+  attr :value, :any
+  attr :prompt, :string, default: "Select"
+  attr :options, :list, required: true
+  attr :change_event, :string, default: "change", doc: "The event to push when selection changes"
+  attr :target, :any, default: nil, doc: "The phx-target for the event"
+  attr :field, Phoenix.HTML.FormField, doc: "a form field struct retrieved from the form"
+  attr :errors, :list, default: []
+
+  def dropdown_select(%{field: %Phoenix.HTML.FormField{} = field} = assigns) do
+    errors = if Phoenix.Component.used_input?(field), do: field.errors, else: []
+
+    assigns
+    |> assign(field: nil, id: assigns.id || field.id)
+    |> assign(:errors, Enum.map(errors, &translate_error(&1)))
+    |> assign_new(:name, fn -> field.name end)
+    |> assign_new(:value, fn -> field.value end)
+    |> dropdown_select()
+  end
+
+  def dropdown_select(assigns) do
+    selected_label =
+      Enum.find_value(assigns.options, assigns.prompt, fn {label, value} ->
+        if to_string(value) == to_string(assigns.value), do: label
+      end)
+
+    assigns = assign(assigns, :selected_label, selected_label)
+
+    ~H"""
+    <div class="fieldset mb-2">
+      <div :if={@label} class="label mb-1">{@label}</div>
+      <div class="dropdown w-full" id={@id}>
+        <div tabindex="0" role="button" class="btn btn-outline w-full justify-between font-normal">
+          {@selected_label}
+          <.icon name="hero-chevron-down" class="size-4" />
+        </div>
+        <ul
+          tabindex="0"
+          class="dropdown-content menu bg-base-100 rounded-box z-50 w-full p-2 shadow border border-base-200"
+        >
+          <li :for={{label, value} <- @options}>
+            <button
+              type="button"
+              class={if to_string(value) == to_string(@value), do: "active", else: ""}
+              phx-click={JS.push(@change_event, value: %{value: value})}
+              phx-target={@target}
+              onclick="this.closest('.dropdown').removeAttribute('open'); document.activeElement.blur();"
+            >
+              <Lucide.check class={[
+                "size-4",
+                to_string(value) != to_string(@value) && "opacity-0"
+              ]} />
+              {label}
+            </button>
+          </li>
+        </ul>
+        <select name={@name} class="hidden">
+          {Phoenix.HTML.Form.options_for_select(@options, @value)}
+        </select>
+      </div>
+      <.error :for={msg <- @errors}>{msg}</.error>
+    </div>
+    """
+  end
+
+  @doc """
   Renders a header with title.
   """
   slot :inner_block, required: true
