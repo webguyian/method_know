@@ -55,7 +55,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
             <Lucide.x class="size-6 text-slate-400 hover:text-slate-700" />
           </button>
         </div>
-        <div class="flex-1 overflow-visible px-6 py-2">
+        <div class="flex-1 overflow-y-auto px-6 py-2">
           <%= if @form_action == :show do %>
             <div class="flex flex-col gap-2">
               <div class="prose max-w-none text-slate-700">
@@ -94,8 +94,33 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
               tags={@tags}
               form_action={@form_action}
             />
+            <.live_component
+              module={MethodKnowWeb.TagFilterComponent}
+              id="tag-filter"
+              all_tags={@all_tags}
+              tags={@tags}
+            />
           <% end %>
         </div>
+        <%= if @form_action != :show do %>
+          <div class="flex flex-row-reverse justify-end gap-2 p-6 border-t border-base-200 mt-auto bg-white shrink-0 z-10">
+            <.button
+              form="resource-form"
+              class="w-1/2"
+              phx-disable-with="Saving..."
+              variant="primary"
+            >
+              <%= if @form_action == :edit do %>
+                Save Changes
+              <% else %>
+                Share
+              <% end %>
+            </.button>
+            <.button class="w-1/2" type="button" phx-click={@on_close} phx-target={@myself}>
+              Cancel
+            </.button>
+          </div>
+        <% end %>
       </div>
     </div>
     """
@@ -161,20 +186,6 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
     changeset = Resources.change_resource(socket.assigns.current_scope, resource, params)
 
     {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
-  end
-
-  def handle_info({:tags_updated, new_tags}, socket) do
-    changeset =
-      Resources.change_resource(
-        socket.assigns.current_scope,
-        %Resource{},
-        Map.put(socket.assigns.form.params || %{}, "tags", new_tags)
-      )
-
-    {:noreply,
-     socket
-     |> assign(:tags, new_tags)
-     |> assign(:form, to_form(changeset, action: :validate))}
   end
 
   defp normalize_tags(params) do

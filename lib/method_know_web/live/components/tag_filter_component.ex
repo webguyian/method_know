@@ -48,40 +48,55 @@ defmodule MethodKnowWeb.TagFilterComponent do
           <% end %>
         </div>
       <% end %>
-      <input
-        type="text"
-        id="tag_input"
-        name="tag_input"
-        value={@tag_input}
-        class="input input-bordered w-full"
-        placeholder="Add tag"
-        autocomplete="off"
+      <form
+        phx-submit="submit_tag"
+        phx-change="change_tag_input"
         phx-target={@myself}
-        phx-focus="show_tag_dropdown"
-        phx-keyup="filter_tags"
-        phx-keydown="maybe_add_tag"
-        phx-hook="tagFilter"
-      />
-      <div
-        id="tag-dropdown"
-        class="absolute left-0 right-0 mt-1 max-h-26 overflow-auto bg-base-100 border border-base-200 rounded shadow z-10 text-base-content"
-        style={if @show_tag_dropdown, do: "display: block;", else: "display: none;"}
-        phx-capture-click
-        phx-stop-propagation
+        class="flex gap-2 w-full"
       >
-        <% applied_tags = @tags %>
-        <%= for tag <- (@filtered_tags) |> Enum.reject(&(&1 in applied_tags)) do %>
-          <button
-            type="button"
-            class="px-3 py-2 w-full text-left cursor-pointer hover:bg-base-200 hover:text-base-content"
-            phx-click="add_tag"
-            phx-value-tag={tag}
+        <div class="relative w-full">
+          <input
+            type="text"
+            id="tag_input"
+            name="tag_input"
+            value={@tag_input}
+            class="input input-bordered w-full"
+            placeholder="Add tag"
+            autocomplete="off"
             phx-target={@myself}
+            phx-focus="show_tag_dropdown"
+            phx-debounce="200"
+          />
+          <div
+            id="tag-dropdown"
+            class="absolute left-0 right-0 mt-1 max-h-26 overflow-auto bg-base-100 border border-base-200 rounded shadow z-10 text-base-content"
+            style={if @show_tag_dropdown, do: "display: block;", else: "display: none;"}
+            phx-capture-click
+            phx-stop-propagation
           >
-            {tag}
-          </button>
-        <% end %>
-      </div>
+            <% applied_tags = @tags %>
+            <%= for tag <- (@filtered_tags) |> Enum.reject(&(&1 in applied_tags)) do %>
+              <button
+                type="button"
+                class="px-3 py-2 w-full text-left cursor-pointer hover:bg-base-200 hover:text-base-content"
+                phx-click="add_tag"
+                phx-value-tag={tag}
+                phx-target={@myself}
+              >
+                {tag}
+              </button>
+            <% end %>
+          </div>
+        </div>
+        <button
+          type="submit"
+          class="btn btn-outline"
+          aria-label="Add Tag"
+          phx-disable-with="..."
+        >
+          Add
+        </button>
+      </form>
     </div>
     """
   end
@@ -95,52 +110,43 @@ defmodule MethodKnowWeb.TagFilterComponent do
     {:noreply, assign(socket, show_tag_dropdown: false)}
   end
 
-  def handle_event("filter_tags", %{"value" => value}, socket) do
+  def handle_event("change_tag_input", %{"tag_input" => value}, socket) do
     filtered =
       Enum.filter(socket.assigns.all_tags, fn tag ->
         String.contains?(tag, String.downcase(value))
       end)
 
-    {:noreply, assign(socket, filtered_tags: filtered)}
-  end
-
-  def handle_event("maybe_add_tag", %{"key" => key, "value" => value}, socket) do
-    tags = socket.assigns.tags || []
-
-    if key == "Enter" do
-      new_tag =
-        value
-        |> String.trim()
-        |> String.downcase()
-
-      new_tags =
-        if new_tag != "" do
-          Enum.uniq([new_tag | tags])
-        else
-          tags
-        end
-
-      send(self(), {:tags_updated, new_tags})
-
-      {:noreply,
-       socket
-       |> assign(:tags, new_tags)
-       |> assign(:tag_input, "")}
-    else
-      {:noreply, assign(socket, tag_input: value)}
-    end
+    {:noreply, assign(socket, filtered_tags: filtered, tag_input: value)}
   end
 
   def handle_event("add_tag", %{"tag" => tag}, socket) do
-    send(self(), {:tags_updated, Enum.uniq([tag | socket.assigns.tags])})
+    tag = String.trim(tag)
 
-    {:noreply, assign(socket, show_tag_dropdown: false)}
+    if tag != "" do
+      new_tags = Enum.uniq([tag | socket.assigns.tags])
+      send(self(), {:tags_updated, new_tags})
+      {:noreply, assign(socket, tags: new_tags, tag_input: "", show_tag_dropdown: false)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("submit_tag", %{"tag_input" => tag}, socket) do
+    tag = String.trim(tag) |> String.downcase()
+
+    if tag != "" do
+      new_tags = Enum.uniq([tag | socket.assigns.tags])
+      send(self(), {:tags_updated, new_tags})
+      {:noreply, assign(socket, tags: new_tags, tag_input: "", show_tag_dropdown: false)}
+    else
+      {:noreply, socket}
+    end
   end
 
   def handle_event("remove_tag", %{"tag" => tag}, socket) do
-    send(self(), {:tags_updated, Enum.reject(socket.assigns.tags, &(&1 == tag))})
-
-    {:noreply, socket}
+    new_tags = Enum.reject(socket.assigns.tags, &(&1 == tag))
+    send(self(), {:tags_updated, new_tags})
+    {:noreply, assign(socket, tags: new_tags)}
   end
 
   def handle_event(_event, _params, socket), do: {:noreply, socket}

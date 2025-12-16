@@ -15,11 +15,11 @@ defmodule MethodKnowWeb.ResourceLive.FormComponent do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="flex flex-col justify-start h-full">
+    <div class="flex flex-col">
       <.form
         for={@form}
         id="resource-form"
-        class="flex flex-col justify-start h-full"
+        class="flex flex-col"
         phx-change="validate"
         phx-submit="save"
         phx-target={@myself}
@@ -71,33 +71,10 @@ defmodule MethodKnowWeb.ResourceLive.FormComponent do
             placeholder="e.g. JavaScript, Python, Elixir"
           />
         <% end %>
-        <.live_component
-          module={MethodKnowWeb.TagFilterComponent}
-          id="tag-filter"
-          all_tags={@all_tags}
-          tags={@tags}
-        />
         <%= if @form[:id].value do %>
           <input type="hidden" name="resource[id]" value={@form[:id].value} />
         <% end %>
-        <input type="hidden" name="resource[tags]" value={Enum.join(@tags, ",")} />
-        <div class="flex flex-row-reverse justify-end gap-2 mt-auto">
-          <.button
-            class="w-1/2"
-            phx-disable-with="Saving..."
-            variant="primary"
-            disabled={@form.source.changes == %{}}
-          >
-            <%= if @form_action == :edit do %>
-              Save Changes
-            <% else %>
-              Share
-            <% end %>
-          </.button>
-          <.button class="w-1/2" type="button" phx-click={@on_close} phx-target={@myself}>
-            Cancel
-          </.button>
-        </div>
+        <input type="hidden" name="resource[tags]" value={Enum.join(@tags || [], ",")} />
       </.form>
     </div>
     """
