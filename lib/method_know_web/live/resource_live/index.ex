@@ -12,8 +12,6 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     end
 
     my_resources? = socket.assigns.live_action == :my
-    {filtered_resources, all_resources} = get_resources_pair(socket.assigns, [], [], "")
-    resources = get_resources(socket.assigns)
 
     {:ok,
      socket
@@ -35,11 +33,36 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        show_filters_on_mobile: false,
        toast_message: nil,
        toast_visible: false,
-       resources_empty?: Enum.empty?(resources),
-       total_resource_count: length(all_resources),
-       filtered_resource_count: length(filtered_resources)
+       # Defaults, will be updated by handle_params
+       current_path: nil,
+       resources_empty?: false,
+       total_resource_count: 0,
+       filtered_resource_count: 0
      )
-     |> stream(:resources, filtered_resources)}
+     |> stream(:resources, [], reset: true)}
+  end
+
+  @impl true
+  def handle_params(params, url, socket) do
+    search = params["search"] || ""
+    types = parse_list_param(params["types"])
+    tags = parse_list_param(params["tags"])
+    current_path = URI.parse(url).path
+
+    {filtered, total} = get_resources_pair(socket.assigns, types, tags, search)
+
+    {:noreply,
+     socket
+     |> assign(
+       current_path: current_path,
+       search: search,
+       selected_types: types,
+       selected_tags: tags,
+       resources_empty?: Enum.empty?(filtered),
+       total_resource_count: length(total),
+       filtered_resource_count: length(filtered)
+     )
+     |> stream(:resources, filtered, reset: true)}
   end
 
   @impl true
@@ -286,23 +309,9 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def handle_event("apply_filters", _params, socket) do
     selected_types = socket.assigns.maybe_selected_types || socket.assigns.selected_types
     selected_tags = socket.assigns.maybe_selected_tags || socket.assigns.selected_tags
+    search = socket.assigns.search
 
-    {filtered, total} =
-      get_resources_pair(socket.assigns, selected_types, selected_tags, socket.assigns.search)
-
-    {:noreply,
-     socket
-     |> assign(
-       maybe_selected_tags: nil,
-       maybe_selected_types: nil,
-       selected_tags: selected_tags,
-       selected_types: selected_types,
-       show_filters_on_mobile: false,
-       resources_empty?: Enum.empty?(filtered),
-       total_resource_count: length(total),
-       filtered_resource_count: length(filtered)
-     )
-     |> stream(:resources, filtered, reset: true)}
+    {:noreply, patch_with_filters(socket, search, selected_types, selected_tags)}
   end
 
   def handle_event("confirm_delete", %{"id" => id}, socket) do
@@ -344,32 +353,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   end
 
   def handle_event("filter_reset", _params, socket) do
-    selected_tags = []
-    selected_types = []
-
-    {filtered, total} =
-      get_resources_pair(socket.assigns, selected_types, selected_tags, socket.assigns.search)
-
-    socket =
-      if socket.assigns.show_filters_on_mobile do
-        socket
-        |> assign(maybe_selected_tags: [], maybe_selected_types: [])
-      else
-        socket
-        |> assign(:selected_tags, selected_tags)
-        |> assign(:selected_types, selected_types)
-        |> assign(:maybe_selected_tags, nil)
-        |> assign(:maybe_selected_types, nil)
-      end
-
-    {:noreply,
-     socket
-     |> assign(:selected_tags, selected_tags)
-     |> assign(:selected_types, selected_types)
-     |> assign(:resources_empty?, Enum.empty?(filtered))
-     |> assign(:total_resource_count, length(total))
-     |> assign(:filtered_resource_count, length(filtered))
-     |> stream(:resources, filtered, reset: true)}
+    {:noreply, push_patch(socket, to: socket.assigns.current_path)}
   end
 
   def handle_event("filter_tag", %{"tag" => tag}, socket) do
@@ -380,21 +364,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         [tag | socket.assigns.selected_tags]
       end
 
-    {filtered, total} =
-      get_resources_pair(
-        socket.assigns,
-        socket.assigns.selected_types,
-        selected_tags,
-        socket.assigns.search
-      )
+    search = socket.assigns.search
+    selected_types = socket.assigns.selected_types
 
-    {:noreply,
-     socket
-     |> assign(:selected_tags, selected_tags)
-     |> assign(:resources_empty?, Enum.empty?(filtered))
-     |> assign(:total_resource_count, length(total))
-     |> assign(:filtered_resource_count, length(filtered))
-     |> stream(:resources, filtered, reset: true)}
+    {:noreply, patch_with_filters(socket, search, selected_types, selected_tags)}
   end
 
   def handle_event("filter_type", %{"resource_type" => types}, socket) do
@@ -405,41 +378,18 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         _ -> []
       end
 
-    {filtered, total} =
-      get_resources_pair(
-        socket.assigns,
-        selected_types,
-        socket.assigns.selected_tags,
-        socket.assigns.search
-      )
+    search = socket.assigns.search
+    selected_tags = socket.assigns.selected_tags
 
-    {:noreply,
-     socket
-     |> assign(:selected_types, selected_types)
-     |> assign(:resources_empty?, Enum.empty?(filtered))
-     |> assign(:total_resource_count, length(total))
-     |> assign(:filtered_resource_count, length(filtered))
-     |> stream(:resources, filtered, reset: true)}
+    {:noreply, patch_with_filters(socket, search, selected_types, selected_tags)}
   end
 
   def handle_event("filter_type", %{"_target" => ["resource_type"]}, socket) do
     selected_types = []
+    search = socket.assigns.search
+    selected_tags = socket.assigns.selected_tags
 
-    {filtered, total} =
-      get_resources_pair(
-        socket.assigns,
-        selected_types,
-        socket.assigns.selected_tags,
-        socket.assigns.search
-      )
-
-    {:noreply,
-     socket
-     |> assign(:selected_types, selected_types)
-     |> assign(:resources_empty?, Enum.empty?(filtered))
-     |> assign(:total_resource_count, length(total))
-     |> assign(:filtered_resource_count, length(filtered))
-     |> stream(:resources, filtered, reset: true)}
+    {:noreply, patch_with_filters(socket, search, selected_types, selected_tags)}
   end
 
   def handle_event("hide_delete_modal", _params, socket) do
@@ -497,18 +447,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   def handle_event("search", %{"search" => search}, socket) do
     search = String.trim(search || "")
-
     selected_types = socket.assigns.selected_types
     selected_tags = socket.assigns.selected_tags
-    {filtered, total} = get_resources_pair(socket.assigns, selected_types, selected_tags, search)
 
-    {:noreply,
-     socket
-     |> assign(:search, search)
-     |> assign(:resources_empty?, Enum.empty?(filtered))
-     |> assign(:total_resource_count, length(total))
-     |> assign(:filtered_resource_count, length(filtered))
-     |> stream(:resources, filtered, reset: true)}
+    {:noreply, patch_with_filters(socket, search, selected_types, selected_tags)}
   end
 
   def handle_event("show_delete_modal", %{"id" => id}, socket) do
@@ -690,5 +632,33 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   defp update_all_tags(socket) do
     assign(socket, :all_tags, Resources.list_all_tags())
+  end
+
+  defp patch_with_filters(socket, search, types, tags) do
+    params =
+      %{
+        "search" => if(search != "", do: search),
+        "types" => if(types != [], do: Enum.join(types, ",")),
+        "tags" => if(tags != [], do: Enum.join(tags, ","))
+      }
+      |> Enum.reject(fn {_k, v} -> is_nil(v) end)
+
+    path = socket.assigns.current_path || "/"
+
+    if Enum.empty?(params) do
+      push_patch(socket, to: path)
+    else
+      push_patch(socket, to: "#{path}?#{URI.encode_query(params)}")
+    end
+  end
+
+  defp parse_list_param(param) do
+    case param do
+      nil -> []
+      "" -> []
+      val when is_binary(val) -> String.split(val, ",")
+      val when is_list(val) -> val
+      _ -> []
+    end
   end
 end
