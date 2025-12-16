@@ -113,7 +113,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
             </div>
             <button
               type="button"
-              class="ml-2 flex items-center gap-1 px-3 py-2 -translate-y-1 rounded-lg bg-white border border-slate-300 text-slate-700 font-medium shadow-sm hover:bg-slate-50 transition md:hidden h-full"
+              class="ml-2 btn btn-md btn-outline bg-base-100 border-base-300 text-base-content/80 font-medium shadow-sm hover:bg-base-200 transition md:hidden h-full flex items-center gap-1 px-3 py-2 -translate-y-1 rounded-lg"
               phx-click="toggle_filters"
               id="filters-toggle-btn"
             >
@@ -208,7 +208,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def search_form(assigns) do
     ~H"""
     <form phx-change="search" class="w-full relative">
-      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+      <span class="absolute left-3 top-1/2 -translate-y-1/2 text-base-content/50 pointer-events-none z-10">
         <Lucide.search class="size-5" />
       </span>
       <.input
@@ -216,7 +216,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         value={@search || ""}
         type="text"
         placeholder="Search resource by title or description..."
-        class="w-full text-base pl-10 pr-4 py-2 bg-white border border-slate-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-primary"
+        class="w-full text-base input input-bordered bg-base-100 text-base-content shadow-sm focus:outline-none focus:ring-2 focus:ring-primary pl-10 pr-4 rounded-md h-10 py-2"
         autocomplete="off"
       />
     </form>

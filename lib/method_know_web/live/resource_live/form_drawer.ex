@@ -34,12 +34,12 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
         phx-window-keyup="esc_close"
       >
       </div>
-      <div class="w-full h-full rounded-none md:my-auto md:ml-auto md:mr-10 md:h-[85%] md:max-w-[490px] md:rounded-xl bg-white shadow-xl flex flex-col animate-slide-in-right relative md:translate-y-6">
+      <div class="w-full h-full rounded-none md:my-auto md:ml-auto md:mr-10 md:h-[85%] md:max-w-[490px] md:rounded-xl bg-base-100 shadow-xl flex flex-col animate-slide-in-right relative md:translate-y-6">
         <div class="flex items-start justify-between px-6 pt-4">
           <header>
-            <h2 class="text-xl font-semibold text-slate-900">{@title}</h2>
+            <h2 class="text-xl font-semibold text-base-content">{@title}</h2>
             <%= if @form_action != :show do %>
-              <p class="text-slate-500 text-sm">
+              <p class="text-base-content/60 text-sm">
                 Contribute to the knowledge base by sharing valuable content
               </p>
             <% end %>
@@ -52,13 +52,13 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
             phx-target={@myself}
             phx-mounted={JS.focus()}
           >
-            <Lucide.x class="size-6 text-slate-400 hover:text-slate-700" />
+            <Lucide.x class="size-6 text-base-content/40 hover:text-base-content" />
           </button>
         </div>
         <div class="flex-1 overflow-y-auto px-6 py-2">
           <%= if @form_action == :show do %>
             <div class="flex flex-col gap-2">
-              <div class="prose max-w-none text-slate-700">
+              <div class="prose max-w-none text-base-content/80">
                 {@resource.description}
               </div>
               <%= if @resource.resource_type == "code_snippet" do %>
@@ -68,7 +68,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
                 />
               <% end %>
               <%= if @resource.author do %>
-                <div class="flex items-center gap-2 text-slate-500 text-xs mb-2">
+                <div class="flex items-center gap-2 text-base-content/60 text-xs mb-2">
                   <Lucide.book_open_text class="size-4" /> by {@resource.author}
                 </div>
               <% end %>
@@ -77,7 +77,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
               <% end %>
               <div class="mt-4 flex flex-wrap gap-1 mb-2">
                 <%= for tag <- (@resource.tags || []) do %>
-                  <span class="badge badge-sm border-neutral-300 bg-transparent text-base-content p-2 rounded-full">
+                  <span class="badge badge-sm border-base-content/20 bg-transparent text-base-content/80 p-2 rounded-full">
                     {tag}
                   </span>
                 <% end %>
@@ -103,7 +103,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
           <% end %>
         </div>
         <%= if @form_action != :show do %>
-          <div class="flex flex-row-reverse justify-end gap-2 p-6 border-t border-base-200 mt-auto bg-white shrink-0 z-10">
+          <div class="flex flex-row-reverse justify-end gap-2 p-6 border-t border-base-200 mt-auto bg-base-100 shrink-0 z-10">
             <.button
               form="resource-form"
               class="w-1/2"

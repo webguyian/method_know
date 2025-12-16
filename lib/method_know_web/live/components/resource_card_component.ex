@@ -13,7 +13,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
   def render(assigns) do
     ~H"""
     <div
-      class="bg-white min-h-70 rounded-xl shadow-md flex flex-col overflow-hidden border border-slate-200 group hover:shadow-lg transition-shadow duration-150"
+      class="bg-base-100 min-h-70 rounded-xl shadow-md flex flex-col overflow-hidden border border-base-200 group hover:shadow-lg transition-shadow duration-150"
       id={"resources-#{@resource.id}"}
     >
       <div class="flex items-center justify-between px-4 pt-4 pb-2">
@@ -28,7 +28,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
               class="icon-btn text-base-content"
               title="Edit"
             >
-              <Lucide.pencil class="size-5 text-slate-500 hover:text-slate-700" />
+              <Lucide.pencil class="size-5 text-base-content/60 hover:text-base-content" />
             </button>
             <button
               type="button"
@@ -37,14 +37,16 @@ defmodule MethodKnowWeb.ResourceCardComponent do
               class="icon-btn text-base-content"
               title="Delete"
             >
-              <Lucide.trash_2 class="size-5 text-slate-500 hover:text-slate-700" />
+              <Lucide.trash_2 class="size-5 text-base-content/60 hover:text-base-content" />
             </button>
           <% end %>
         </div>
       </div>
       <div class="flex flex-col h-full px-4 pb-2">
-        <h3 class="font-semibold text-lg text-base-content mb-1 truncate">{@resource.title}</h3>
-        <p class="text-slate-700 text-sm mb-2">
+        <h3 class="font-semibold text-lg text-base-content mb-1 truncate">
+          {@resource.title}
+        </h3>
+        <p class="text-base-content/80 text-sm mb-2">
           {truncate_description(@resource.description)}
         </p>
         <%= if @resource.resource_type == "code_snippet" do %>
@@ -55,7 +57,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
           />
         <% end %>
         <%= if @resource.author do %>
-          <div class="flex items-center gap-2 text-slate-500 text-xs mb-2">
+          <div class="flex items-center gap-2 text-base-content/60 text-xs mb-2">
             <Lucide.book_open_text class="size-4" /> by {@resource.author}
           </div>
         <% end %>
@@ -64,13 +66,13 @@ defmodule MethodKnowWeb.ResourceCardComponent do
         <% end %>
         <div class="mt-4 flex flex-wrap gap-1 mb-2">
           <%= for tag <- (@resource.tags || []) do %>
-            <span class="badge badge-sm border-neutral-300 bg-transparent text-base-content p-2 rounded-full">
+            <span class="badge badge-sm border-base-content/20 bg-transparent text-base-content/80 p-2 rounded-full">
               {tag}
             </span>
           <% end %>
         </div>
       </div>
-      <footer class="mt-auto hover:bg-slate-50 border-t border-slate-100">
+      <footer class="mt-auto hover:bg-base-200 border-t border-base-200 transition-colors">
         <button
           class="flex items-center justify-between w-full px-4 py-3 cursor-pointer"
           title="View details"
@@ -79,7 +81,9 @@ defmodule MethodKnowWeb.ResourceCardComponent do
           phx-value-id={@resource.id}
         >
           <.avatar user={@resource.user} />
-          <span class="text-xs text-slate-500">{relative_date(@resource.inserted_at)}</span>
+          <span class="text-xs text-base-content/60">
+            {relative_date(@resource.inserted_at)}
+          </span>
         </button>
       </footer>
     </div>

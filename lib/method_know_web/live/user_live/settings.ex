@@ -14,7 +14,7 @@ defmodule MethodKnowWeb.UserLive.Settings do
         <:subtitle>Manage your account and profile settings</:subtitle>
       </.header>
 
-      <div class="max-w-lg border border-slate-300 p-6 rounded-xl">
+      <div class="max-w-lg border border-base-content/20 p-6 rounded-xl">
         <.form for={@email_form} id="email_form" phx-submit="update_email" phx-change="validate_email">
           <.input
             field={@email_form[:email]}

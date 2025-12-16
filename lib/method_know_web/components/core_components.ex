@@ -612,7 +612,7 @@ defmodule MethodKnowWeb.CoreComponents do
     assigns = assign(assigns, icon_name: icon_name, label: label)
 
     ~H"""
-    <span class="badge badge-sm border-neutral-300 bg-transparent text-base-content font-medium p-2.5 rounded-full inline-flex items-center">
+    <span class="badge badge-sm border-base-content/20 bg-transparent text-base-content font-medium p-2.5 rounded-full inline-flex items-center">
       <Lucide.render icon={@icon_name} class="size-4 mr-1" />{@label}
     </span>
     """
