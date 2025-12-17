@@ -18,6 +18,15 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
     end
   end
 
+  attr :all_tags, :list, required: true
+  attr :current_user, :map, required: false
+  attr :title, :string, required: true
+  attr :form_action, :atom, required: true
+  attr :resource, :map, required: true
+  attr :tags, :list, required: true
+  attr :form, :any, required: true
+  attr :current_scope, :any, required: true
+  attr :on_close, :string, required: true
   @impl true
   def render(assigns) do
     ~H"""
@@ -35,8 +44,35 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
       >
       </div>
       <div class="w-full h-full rounded-none md:my-auto md:ml-auto md:mr-10 md:h-[85%] md:max-w-[490px] md:rounded-xl bg-base-100 shadow-xl flex flex-col animate-slide-in-right relative md:translate-y-6">
-        <div class="flex items-start justify-between px-6 pt-4">
-          <header>
+        <div class="flex items-start justify-between p-6 pb-0">
+          <header class="w-full">
+            <%= if @form_action == :show do %>
+              <div class="flex items-center justify-between pb-2">
+                <.resource_type_badge type={@resource.resource_type} />
+                <div class="flex gap-2 pr-2">
+                  <%= if @current_user && @resource.user_id == @current_user.id do %>
+                    <button
+                      type="button"
+                      phx-click="edit_from_drawer"
+                      phx-value-id={@resource.id}
+                      class="icon-btn text-base-content"
+                      title="Edit"
+                    >
+                      <Lucide.pencil class="size-5 text-base-content/60 hover:text-base-content" />
+                    </button>
+                    <button
+                      type="button"
+                      phx-click="show_delete_modal"
+                      phx-value-id={@resource.id}
+                      class="icon-btn text-base-content"
+                      title="Delete"
+                    >
+                      <Lucide.trash_2 class="size-5 text-base-content/60 hover:text-base-content" />
+                    </button>
+                  <% end %>
+                </div>
+              </div>
+            <% end %>
             <h2 class="text-xl font-semibold text-base-content">{@title}</h2>
             <%= if @form_action != :show do %>
               <p class="text-base-content/60 text-sm">
@@ -46,7 +82,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
           </header>
           <button
             type="button"
-            class="icon-btn"
+            class="icon-btn ml-2"
             aria-label="Close"
             phx-click={@on_close}
             phx-target={@myself}
@@ -55,36 +91,13 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
             <Lucide.x class="size-6 text-base-content/40 hover:text-base-content" />
           </button>
         </div>
-        <div class="flex-1 overflow-y-auto px-6 py-2">
+        <div class="flex-1 overflow-y-auto p-6 pt-2">
           <%= if @form_action == :show do %>
-            <div class="flex flex-col gap-2">
-              <div class="prose max-w-none text-base-content/80">
-                {@resource.description}
-              </div>
-              <%= if @resource.resource_type == "code_snippet" do %>
-                <.code_snippet
-                  code={@resource.code}
-                  language={@resource.language}
-                />
-              <% end %>
-              <%= if @resource.author do %>
-                <div class="flex items-center gap-2 text-base-content/60 text-xs mb-2">
-                  <Lucide.book_open_text class="size-4" /> by {@resource.author}
-                </div>
-              <% end %>
-              <%= if @resource.url do %>
-                <.resource_link resource={@resource} />
-              <% end %>
-              <div class="mt-4 flex flex-wrap gap-1 mb-2">
-                <%= for tag <- (@resource.tags || []) do %>
-                  <.tag_button
-                    tag={tag}
-                    active={assigns[:selected_tags] && tag in assigns.selected_tags}
-                    click="filter_tag"
-                  />
-                <% end %>
-              </div>
-            </div>
+            <.resource_display
+              resource={@resource}
+              current_user={@current_user}
+              selected_tags={@tags}
+            />
           <% else %>
             <.live_component
               module={MethodKnowWeb.ResourceLive.FormComponent}
@@ -105,25 +118,96 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
           <% end %>
         </div>
         <%= if @form_action != :show do %>
-          <div class="flex flex-row-reverse justify-end gap-2 p-6 border-t border-base-200 mt-auto bg-base-100 shrink-0 z-10">
-            <.button
-              form="resource-form"
-              class="w-1/2"
-              phx-disable-with="Saving..."
-              variant="primary"
-            >
-              <%= if @form_action == :edit do %>
-                Save Changes
-              <% else %>
-                Share
-              <% end %>
-            </.button>
-            <.button class="w-1/2" type="button" phx-click={@on_close} phx-target={@myself}>
-              Cancel
-            </.button>
-          </div>
+          <.form_actions
+            form_action={@form_action}
+            from_drawer={@from_drawer}
+            on_close={@on_close}
+            resource={@resource}
+            myself={@myself}
+          />
         <% end %>
       </div>
+    </div>
+    """
+  end
+
+  attr :form_action, :atom, required: true
+  attr :from_drawer, :boolean, default: false
+  attr :on_close, :string, required: true
+  attr :resource, :map, required: true
+  attr :myself, :any, required: true
+
+  def form_actions(assigns) do
+    ~H"""
+    <div class="flex flex-row-reverse justify-end gap-2 p-6 border-t border-base-200 mt-auto bg-base-100 shrink-0 z-10">
+      <.button
+        form="resource-form"
+        class="w-1/2"
+        phx-disable-with="Saving..."
+        variant="primary"
+      >
+        <%= if @form_action == :edit do %>
+          Save Changes
+        <% else %>
+          Share
+        <% end %>
+      </.button>
+      <.button
+        class="w-1/2"
+        type="button"
+        phx-click={if @from_drawer, do: "show_resource", else: @on_close}
+        phx-target={@myself}
+        phx-value-id={@resource.id}
+      >
+        Cancel
+      </.button>
+    </div>
+    """
+  end
+
+  attr :resource, :map, required: true
+  attr :current_user, :map, required: true
+  attr :selected_tags, :list, default: nil
+
+  def resource_display(assigns) do
+    ~H"""
+    <div class="flex flex-col gap-2">
+      <div class="prose max-w-none text-base-content/80">
+        {@resource.description}
+      </div>
+      <%= if @resource.resource_type == "code_snippet" do %>
+        <.code_snippet
+          code={@resource.code}
+          language={@resource.language}
+        />
+      <% end %>
+      <%= if @resource.author do %>
+        <div class="flex items-center gap-2 text-base-content/60 text-xs mb-2">
+          <Lucide.book_open_text class="size-4" /> by {@resource.author}
+        </div>
+      <% end %>
+      <%= if @resource.url do %>
+        <.resource_link resource={@resource} />
+      <% end %>
+      <div class="mt-4 flex flex-wrap gap-1 mb-2">
+        <%= for tag <- (@resource.tags || []) do %>
+          <.tag_button
+            tag={tag}
+            active={assigns[:selected_tags] && tag in assigns.selected_tags}
+            click="filter_tag"
+          />
+        <% end %>
+      </div>
+      <.live_component
+        module={MethodKnowWeb.LikeButtonComponent}
+        id={"drawer-like-btn-#{@resource.id}"}
+        resource={@resource}
+        current_user={@current_user}
+        likes_count={MethodKnow.Resources.count_likes(@resource.id)}
+        liked_by_user={
+          @current_user && MethodKnow.Resources.liked_by_user?(@resource.id, @current_user.id)
+        }
+      />
     </div>
     """
   end
@@ -139,6 +223,11 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   end
 
   def handle_event("esc_close", _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("show_resource", %{"id" => id}, socket) do
+    send(self(), {:show_resource, id})
     {:noreply, socket}
   end
 

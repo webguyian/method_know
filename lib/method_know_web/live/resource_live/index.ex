@@ -4,6 +4,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   import MethodKnowWeb.FilterPanelComponent
 
   alias MethodKnow.Resources
+  alias MethodKnow.Resources.Resource
 
   @impl true
   def mount(_params, _session, %{assigns: %{current_scope: current_scope}} = socket) do
@@ -18,7 +19,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
          delete_resource_id: nil,
          form_action: :new,
          form_params: %{},
-         resource: nil,
+         resource: %Resource{},
          resource_types: Resources.resource_types_with_labels(),
          selected_types: [],
          selected_tags: [],
@@ -66,7 +67,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
          delete_resource_id: nil,
          form_action: :new,
          form_params: %{},
-         resource: nil,
+         from_drawer: false,
+         resource: %Resource{},
          resource_types: Resources.resource_types_with_labels(),
          selected_types: [],
          selected_tags: [],
@@ -229,15 +231,17 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           module={MethodKnowWeb.ResourceLive.FormDrawer}
           id="resource-form-drawer"
           current_scope={@current_scope}
-          title={@form_title}
-          resource={@resource}
-          return_to={~p"/resources"}
-          on_close="hide_form"
+          current_user={@current_scope && @current_scope.user}
           all_tags={@all_tags}
           tags={@tags}
           selected_tags={@selected_tags}
           form_action={@form_action}
           form_params={@form_params}
+          from_drawer={@from_drawer}
+          on_close="hide_form"
+          resource={@resource}
+          return_to={~p"/resources"}
+          title={@form_title}
         />
       <% end %>
 
@@ -381,6 +385,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     resource = Resources.get_resource!(socket.assigns.current_scope, id)
     {:ok, _} = Resources.delete_resource(socket.assigns.current_scope, resource)
 
+    if socket.assigns.form_action == :show do
+      send(self(), :close_drawer)
+    end
+
     {:noreply,
      socket
      |> assign(:show_delete_modal, false)
@@ -400,7 +408,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       "author" => resource.author,
       "code" => resource.code,
       "language" => resource.language,
-      "tags" => resource.tags || []
+      "tags" => resource.tags
     }
 
     {:noreply,
@@ -411,7 +419,33 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        resource: resource,
        form_params: form_params,
        show_drawer: true,
-       tags: resource.tags || []
+       tags: resource.tags
+     )}
+  end
+
+  def handle_event("edit_from_drawer", %{"id" => id}, socket) do
+    resource = Resources.get_resource!(socket.assigns.current_scope, id)
+    # Set form_params to the resource's fields for editing
+    form_params = %{
+      "resource_type" => resource.resource_type,
+      "title" => resource.title,
+      "description" => resource.description,
+      "url" => resource.url,
+      "author" => resource.author,
+      "code" => resource.code,
+      "language" => resource.language,
+      "tags" => resource.tags
+    }
+
+    {:noreply,
+     socket
+     |> assign(
+       form_action: :edit,
+       form_params: form_params,
+       form_title: "Edit resource",
+       from_drawer: true,
+       resource: resource,
+       tags: resource.tags
      )}
   end
 
@@ -530,7 +564,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
        form_action: :new,
        form_title: "Share a resource",
        form_params: %{},
-       resource: nil,
+       resource: %Resource{},
        show_drawer: true,
        tags: []
      )}
@@ -603,6 +637,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       |> show_toast("Resource updated!")
 
     {:noreply, socket}
+  end
+
+  def handle_info({:show_resource, id}, socket) do
+    handle_event("show", %{"id" => id}, socket)
   end
 
   def handle_info({:tags_committed, tags}, socket) do
