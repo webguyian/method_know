@@ -65,4 +65,53 @@ defmodule MethodKnowWeb.LikeButtonComponentTest do
     refute Resources.liked_by_user?(resource.id, user.id)
     assert Resources.count_likes(resource.id) == 0
   end
+
+  defmodule TestLive do
+    use MethodKnowWeb, :live_view
+
+    def render(assigns) do
+      ~H"""
+      <.live_component
+        module={LikeButtonComponent}
+        id="like-button"
+        resource={@resource}
+        current_user={@current_user}
+        likes_count={@likes_count}
+        liked_by_user={@liked_by_user}
+      />
+      """
+    end
+
+    def mount(_params, %{"resource" => resource, "user" => user}, socket) do
+      {:ok,
+       assign(socket,
+         resource: resource,
+         current_user: user,
+         likes_count: 0,
+         liked_by_user: false
+       )}
+    end
+  end
+
+  test "broadcasts PubSub message on like", %{conn: conn, user: user, resource: resource} do
+    # Subscribe to the resources topic
+    Phoenix.PubSub.subscribe(MethodKnow.PubSub, "resources")
+
+    {:ok, view, _html} =
+      live_isolated(conn, TestLive,
+        session: %{
+          "resource" => resource,
+          "user" => user
+        }
+      )
+
+    # Click the like button
+    view
+    |> element("#like-button")
+    |> render_click()
+
+    # Assert that the PubSub message was broadcast
+    resource_id = resource.id
+    assert_received {:resource_liked, ^resource_id, 1}
+  end
 end
