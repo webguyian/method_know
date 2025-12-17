@@ -449,6 +449,7 @@ defmodule MethodKnowWeb.CoreComponents do
           src={@avatar_url}
           alt="avatar"
           class={"#{@class || "size-7"} rounded-full border border-base-300 bg-base-200 object-cover"}
+          title={@name}
         />
       <% else %>
         <Lucide.circle_user class="size-7 text-base-content/70" />

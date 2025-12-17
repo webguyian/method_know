@@ -14,6 +14,7 @@ defmodule MethodKnow.Application do
        repos: Application.fetch_env!(:method_know, :ecto_repos), skip: skip_migrations?()},
       {DNSCluster, query: Application.get_env(:method_know, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: MethodKnow.PubSub},
+      MethodKnowWeb.Presence,
       # Start a worker by calling: MethodKnow.Worker.start_link(arg)
       # {MethodKnow.Worker, arg},
       # Start to serve requests, typically the last entry

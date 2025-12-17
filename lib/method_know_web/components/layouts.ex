@@ -25,16 +25,24 @@ defmodule MethodKnowWeb.Layouts do
       </Layouts.app>
 
   """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
-
   attr :current_scope, :map,
     default: nil,
     doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
 
+  attr :flash, :map, required: true, doc: "the map of flash messages"
+  attr :online_users, :any, default: []
+  attr :hide_navbar, :boolean, default: false
+  attr :hide_navbar_action, :boolean, default: false
   slot :inner_block, required: true
 
   def app(assigns) do
     ~H"""
+    <.navbar
+      current_scope={@current_scope}
+      online_users={@online_users}
+      hide_navbar={@hide_navbar}
+      hide_navbar_action={@hide_navbar_action}
+    />
     <main class="px-4 py-8 sm:px-6 lg:px-8">
       <div class="container mx-auto">
         {render_slot(@inner_block)}
@@ -129,6 +137,7 @@ defmodule MethodKnowWeb.Layouts do
   attr :current_scope, :map, default: nil
   attr :hide_navbar, :boolean, default: false
   attr :hide_navbar_action, :boolean, default: false
+  attr :online_users, :any, default: []
   slot :inner_block
 
   def navbar(assigns) do
@@ -148,6 +157,7 @@ defmodule MethodKnowWeb.Layouts do
             </.link>
           </div>
           <div class="flex gap-4 items-center">
+            <.presence online_users={@online_users} current_scope={@current_scope} />
             <%= if @current_scope && @current_scope.user do %>
               <%= unless @hide_navbar_action do %>
                 <.button class="lg:px-10 lg:py-2" variant="primary" phx-click="show_drawer">
@@ -190,6 +200,38 @@ defmodule MethodKnowWeb.Layouts do
           </div>
         </div>
       </nav>
+    <% end %>
+    """
+  end
+
+  @doc """
+  Renders the online users presence avatars in the navbar.
+  """
+  attr :current_scope, :map, default: nil
+  attr :online_users, :any, default: []
+
+  def presence(assigns) do
+    current_user = assigns[:current_scope] && assigns[:current_scope].user
+
+    filtered_users =
+      Enum.reject(assigns.online_users, fn user ->
+        user.email && current_user.email && user.email == current_user.email
+      end)
+
+    assigns = assign(assigns, :filtered_users, filtered_users)
+
+    ~H"""
+    <%= if @filtered_users && Enum.any?(@filtered_users) do %>
+      <div class="flex items-center gap-1 mr-2">
+        <%= for {user, idx} <- Enum.with_index(Enum.take(@filtered_users, 5)) do %>
+          <.avatar user={user} show_name={false} class="size-7" />
+        <% end %>
+        <%= if length(@filtered_users) > 5 do %>
+          <span class="ml-1 text-xs font-medium bg-base-200 rounded-full px-2 py-1 text-base-content/70">
+            +{length(@filtered_users) - 5}
+          </span>
+        <% end %>
+      </div>
     <% end %>
     """
   end

@@ -7,40 +7,86 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   @impl true
   def mount(_params, _session, %{assigns: %{current_scope: current_scope}} = socket) do
-    if connected?(socket) and current_scope do
+    if not connected?(socket) or is_nil(current_scope) do
+      my_resources? = socket.assigns.live_action == :my
+
+      {:ok,
+       socket
+       |> assign(
+         page_title: if(my_resources?, do: "Your resources", else: "Discover Resources"),
+         all_tags: Resources.list_all_tags(),
+         delete_resource_id: nil,
+         form_action: :new,
+         form_params: %{},
+         resource: nil,
+         resource_types: Resources.resource_types_with_labels(),
+         selected_types: [],
+         selected_tags: [],
+         show_delete_modal: false,
+         show_drawer: false,
+         show_share_button: System.get_env("SHOW_SHARE_BUTTON") == "true",
+         search: "",
+         tags: [],
+         show_filters_on_mobile: false,
+         toast_message: nil,
+         toast_visible: false,
+         toast_action: nil,
+         # Defaults, will be updated by handle_params
+         current_path: nil,
+         resources_empty?: false,
+         total_resource_count: 0,
+         filtered_resource_count: 0,
+         online_users: []
+       )
+       |> stream(:resources, [], reset: true)}
+    else
       Resources.subscribe_resources(current_scope)
+      user = current_scope.user
+
+      {:ok, _} =
+        MethodKnowWeb.Presence.track(self(), "users:online", user.id, %{
+          name: user.name,
+          email: user.email
+        })
+
+      Phoenix.PubSub.subscribe(MethodKnow.PubSub, "users:online")
+
+      online_users =
+        MethodKnowWeb.Presence.list("users:online")
+        |> Enum.map(fn {_id, %{metas: [meta | _]}} -> meta end)
+
+      my_resources? = socket.assigns.live_action == :my
+
+      {:ok,
+       socket
+       |> assign(
+         page_title: if(my_resources?, do: "Your resources", else: "Discover Resources"),
+         all_tags: Resources.list_all_tags(),
+         delete_resource_id: nil,
+         form_action: :new,
+         form_params: %{},
+         resource: nil,
+         resource_types: Resources.resource_types_with_labels(),
+         selected_types: [],
+         selected_tags: [],
+         show_delete_modal: false,
+         show_drawer: false,
+         show_share_button: System.get_env("SHOW_SHARE_BUTTON") == "true",
+         search: "",
+         tags: [],
+         show_filters_on_mobile: false,
+         toast_message: nil,
+         toast_visible: false,
+         toast_action: nil,
+         # Defaults, will be updated by handle_params
+         current_path: nil,
+         resources_empty?: false,
+         total_resource_count: 0,
+         filtered_resource_count: 0,
+         online_users: online_users
+       )
+       |> stream(:resources, [], reset: true)}
     end
-
-    my_resources? = socket.assigns.live_action == :my
-
-    {:ok,
-     socket
-     |> assign(
-       page_title: if(my_resources?, do: "Your resources", else: "Discover Resources"),
-       all_tags: Resources.list_all_tags(),
-       delete_resource_id: nil,
-       form_action: :new,
-       form_params: %{},
-       resource: nil,
-       resource_types: Resources.resource_types_with_labels(),
-       selected_types: [],
-       selected_tags: [],
-       show_delete_modal: false,
-       show_drawer: false,
-       show_share_button: System.get_env("SHOW_SHARE_BUTTON") == "true",
-       search: "",
-       tags: [],
-       show_filters_on_mobile: false,
-       toast_message: nil,
-       toast_visible: false,
-       toast_action: nil,
-       # Defaults, will be updated by handle_params
-       current_path: nil,
-       resources_empty?: false,
-       total_resource_count: 0,
-       filtered_resource_count: 0
-     )
-     |> stream(:resources, [], reset: true)}
   end
 
   @impl true
@@ -69,7 +115,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app flash={@flash} current_scope={@current_scope} online_users={@online_users}>
       <%= if @toast_visible do %>
         <.toast message={@toast_message} action={@toast_action} />
       <% else %>
@@ -570,6 +616,18 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      socket
      |> assign(:tags, tags)
      |> assign(:form_params, form_params)}
+  end
+
+  @impl true
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "presence_diff", topic: "users:online"},
+        socket
+      ) do
+    online_users =
+      MethodKnowWeb.Presence.list("users:online")
+      |> Enum.map(fn {_id, %{metas: [meta | _]}} -> meta end)
+
+    {:noreply, assign(socket, online_users: online_users)}
   end
 
   defp get_resources(assigns, selected_types \\ [], selected_tags \\ [], search \\ "") do
