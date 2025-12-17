@@ -13,25 +13,39 @@ defmodule MethodKnowWeb.LikeButtonComponent do
   """
   def render(assigns) do
     ~H"""
-    <button
-      id={"like-btn-#{@resource.id}"}
-      phx-target={@myself}
-      phx-click="toggle_like"
-      class={[
-        "flex items-center gap-1 my-2 text-base-content/70 cursor-pointer hover:text-pink-600 transition-colors",
-        @liked_by_user && "text-pink-600"
-      ]}
-      aria-pressed={@liked_by_user}
-      title={(@liked_by_user && "Unlike") || "Like"}
-    >
-      <Lucide.heart class={[
-        "size-5 transition-colors",
-        (@liked_by_user &&
-           "fill-pink-600 text-pink-600 animate-[pop_0.4s_cubic-bezier(0.175,0.885,0.32,1.27)_forwards]") ||
-          ""
-      ]} />
-      <span class="ml-1 text-sm font-medium">{@likes_count}</span>
-    </button>
+    <div class="inline-flex my-2">
+      <%= if @current_user do %>
+        <button
+          id={@id}
+          phx-target={@myself}
+          phx-click="toggle_like"
+          class={[
+            "flex items-center gap-1 text-base-content/70 cursor-pointer hover:text-pink-600 transition-colors",
+            @liked_by_user && "text-pink-600"
+          ]}
+          aria-pressed={@liked_by_user}
+          title={(@liked_by_user && "Unlike") || "Like"}
+        >
+          <Lucide.heart class={[
+            "size-5 transition-colors",
+            (@liked_by_user &&
+               "fill-pink-600 text-pink-600 animate-[pop_0.4s_cubic-bezier(0.175,0.885,0.32,1.27)_forwards]") ||
+              ""
+          ]} />
+          <span class="ml-1 text-sm font-medium">{@likes_count}</span>
+        </button>
+      <% else %>
+        <a
+          id={"#{@id}-link"}
+          href="/users/log-in"
+          class="flex items-center gap-1 my-2 text-base-content/70 cursor-pointer hover:text-pink-600 transition-colors "
+          title="Log in to like"
+        >
+          <Lucide.heart class="size-5 transition-colors " />
+          <span class="ml-1 text-sm font-medium">{@likes_count}</span>
+        </a>
+      <% end %>
+    </div>
     """
   end
 
