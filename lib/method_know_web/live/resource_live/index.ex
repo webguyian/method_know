@@ -49,6 +49,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           email: user.email
         })
 
+      Phoenix.PubSub.subscribe(MethodKnow.PubSub, "resources")
       Phoenix.PubSub.subscribe(MethodKnow.PubSub, "users:online")
 
       online_users =
@@ -628,6 +629,25 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       |> Enum.map(fn {_id, %{metas: [meta | _]}} -> meta end)
 
     {:noreply, assign(socket, online_users: online_users)}
+  end
+
+  def handle_info({:resource_liked, resource_id, new_like_count}, socket) do
+    # Update the like count for the relevant resource in your assigns
+    # Example for a single resource:
+    # if socket.assigns.resource.id == resource_id do
+    #   {:noreply, assign(socket, :like_count, new_like_count)}
+    # else
+    IO.puts("Received like update for resource #{resource_id} with new count #{new_like_count}")
+    # end
+
+    # Find the resource in the stream (or fetch from DB/context)
+    resource =
+      Resources.get_resource!(resource_id)
+      # If not already updated
+      |> Map.put(:like_count, new_like_count)
+
+    # Update the resource in the stream
+    {:noreply, stream_insert(socket, :resources, resource)}
   end
 
   defp get_resources(assigns, selected_types \\ [], selected_tags \\ [], search \\ "") do

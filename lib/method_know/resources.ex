@@ -155,6 +155,7 @@ defmodule MethodKnow.Resources do
   def get_resource!(id) do
     Resource
     |> Repo.get!(id)
+    |> Repo.preload(:user)
   end
 
   def get_resource!(%Scope{} = scope, id) do

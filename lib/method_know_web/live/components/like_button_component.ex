@@ -52,6 +52,12 @@ defmodule MethodKnowWeb.LikeButtonComponent do
       end
     end
 
+    Phoenix.PubSub.broadcast(
+      MethodKnow.PubSub,
+      "resources",
+      {:resource_liked, resource.id, Resources.count_likes(resource.id)}
+    )
+
     likes_count = Resources.count_likes(resource.id)
     liked_by_user = user && Resources.liked_by_user?(resource.id, user.id)
 
