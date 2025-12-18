@@ -33,6 +33,9 @@ defmodule MethodKnowWeb.Layouts do
   attr :online_users, :any, default: []
   attr :hide_navbar, :boolean, default: false
   attr :hide_navbar_action, :boolean, default: false
+  attr :show_shout_form, :boolean, default: false
+  attr :shout_message, :any, default: nil
+  attr :shout_message_fading, :boolean, default: false
   slot :inner_block
 
   def app(assigns) do
@@ -42,6 +45,9 @@ defmodule MethodKnowWeb.Layouts do
       online_users={@online_users}
       hide_navbar={@hide_navbar}
       hide_navbar_action={@hide_navbar_action}
+      show_shout_form={@show_shout_form}
+      shout_message={@shout_message}
+      shout_message_fading={@shout_message_fading}
     />
     <main class="px-4 py-8 sm:px-6 lg:px-8">
       <div class="container mx-auto">
@@ -142,6 +148,9 @@ defmodule MethodKnowWeb.Layouts do
   attr :hide_navbar, :boolean, default: false
   attr :hide_navbar_action, :boolean, default: false
   attr :online_users, :any, default: []
+  attr :show_shout_form, :boolean, default: false
+  attr :shout_message, :any, default: nil
+  attr :shout_message_fading, :boolean, default: false
   slot :inner_block
 
   def navbar(assigns) do
@@ -161,7 +170,13 @@ defmodule MethodKnowWeb.Layouts do
             </.link>
           </div>
           <div class="flex gap-4 items-center">
-            <.presence online_users={@online_users} current_scope={@current_scope} />
+            <.presence
+              online_users={@online_users}
+              current_scope={@current_scope}
+              show_shout_form={@show_shout_form}
+              shout_message={@shout_message}
+              shout_message_fading={@shout_message_fading}
+            />
             <%= if @current_scope && @current_scope.user do %>
               <%= unless @hide_navbar_action do %>
                 <.button class="lg:px-10 lg:py-2" variant="primary" phx-click="show_drawer">
@@ -172,7 +187,11 @@ defmodule MethodKnowWeb.Layouts do
               <% end %>
               <div class="dropdown dropdown-end">
                 <button type="button" class="btn btn-ghost gap-2 font-normal p-2">
-                  <.avatar user={@current_scope.user} />
+                  <.avatar
+                    user={@current_scope.user}
+                    shout_message={@shout_message}
+                    shout_message_fading={@shout_message_fading}
+                  />
                 </button>
                 <ul class="mt-3 z-[1] p-2 shadow-lg shadow-base-content/5 menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
                   <li class="menu-title text-base-content/60 px-4 py-2 border-b border-base-content/10 mb-1">
@@ -213,6 +232,9 @@ defmodule MethodKnowWeb.Layouts do
   """
   attr :current_scope, :map, default: nil
   attr :online_users, :any, default: []
+  attr :show_shout_form, :boolean, default: false
+  attr :shout_message, :any, default: nil
+  attr :shout_message_fading, :boolean, default: false
 
   def presence(assigns) do
     current_user = assigns[:current_scope] && assigns[:current_scope].user
@@ -228,7 +250,15 @@ defmodule MethodKnowWeb.Layouts do
     <%= if @filtered_users && Enum.any?(@filtered_users) do %>
       <div class="flex items-center gap-1 mr-2">
         <%= for {user, idx} <- Enum.with_index(Enum.take(@filtered_users, 5)) do %>
-          <.avatar user={user} show_name={false} class="size-7" />
+          <div class="relative flex flex-col items-center">
+            <.avatar user={user} show_name={false} class="size-7" />
+            <%= if @shout_message && @shout_message.user == user.email do %>
+              <.shout_bubble message={@shout_message.message} fading={@shout_message_fading} />
+            <% end %>
+            <%= if @show_shout_form && @current_scope && @current_scope.user do %>
+              <.shout_form />
+            <% end %>
+          </div>
         <% end %>
         <%= if length(@filtered_users) > 5 do %>
           <span class="ml-1 text-xs font-medium bg-base-200 rounded-full px-2 py-1 text-base-content/70">
@@ -237,6 +267,33 @@ defmodule MethodKnowWeb.Layouts do
         <% end %>
       </div>
     <% end %>
+    """
+  end
+
+  def shout_form(assigns) do
+    ~H"""
+    <div class="fixed inset-0 z-50 flex items-center justify-center">
+      <div class="absolute inset-0 bg-base-900/60 backdrop-blur-sm"></div>
+      <form
+        class="relative z-10 bg-base-100/90 border border-base-300 rounded-2xl shadow-2xl px-8 py-6 flex flex-col gap-4 items-center animate-fade-in w-full max-w-md"
+        phx-mounted={JS.focus_first()}
+        phx-click-away="shout_form_close"
+        phx-submit="shout_form_submit"
+        phx-window-keyup="esc_close"
+      >
+        <label class="text-lg font-semibold text-base-content mb-2">
+          Shout something to everyone
+        </label>
+        <input
+          type="text"
+          name="message"
+          placeholder="Type your message..."
+          class="input input-lg w-full"
+          autocomplete="off"
+        />
+        <button type="submit" class="btn btn-lg btn-primary w-full">Send Shout</button>
+      </form>
+    </div>
     """
   end
 end

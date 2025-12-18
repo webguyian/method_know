@@ -28,7 +28,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
          show_share_button: System.get_env("SHOW_SHARE_BUTTON") == "true",
          search: "",
          tags: [],
+         shout_message: nil,
+         shout_message_fading: false,
          show_filters_on_mobile: false,
+         show_shout_form: false,
          toast_message: nil,
          toast_visible: false,
          toast_action: nil,
@@ -52,6 +55,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
       Phoenix.PubSub.subscribe(MethodKnow.PubSub, "resources")
       Phoenix.PubSub.subscribe(MethodKnow.PubSub, "users:online")
+      Phoenix.PubSub.subscribe(MethodKnow.PubSub, "users:shout")
 
       online_users =
         MethodKnowWeb.Presence.list("users:online")
@@ -72,9 +76,12 @@ defmodule MethodKnowWeb.ResourceLive.Index do
          resource_types: Resources.resource_types_with_labels(),
          selected_types: [],
          selected_tags: [],
+         shout_message: nil,
+         shout_message_fading: false,
          show_delete_modal: false,
          show_drawer: false,
          show_share_button: System.get_env("SHOW_SHARE_BUTTON") == "true",
+         show_shout_form: false,
          search: "",
          tags: [],
          show_filters_on_mobile: false,
@@ -118,7 +125,14 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope} online_users={@online_users}>
+    <Layouts.app
+      flash={@flash}
+      current_scope={@current_scope}
+      online_users={@online_users}
+      show_shout_form={@show_shout_form}
+      shout_message={@shout_message}
+      shout_message_fading={@shout_message_fading}
+    >
       <%= if @toast_visible do %>
         <.toast message={@toast_message} action={@toast_action} />
       <% else %>
@@ -172,7 +186,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         <% end %>
       <% end %>
 
-      <div class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-8 py-4 items-start">
+      <div
+        class="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-7 xl:grid-cols-8 gap-8 py-4 items-start"
+        phx-window-keyup="shout_form_show"
+      >
         <%= unless @resources_empty? and @search == "" and Enum.empty?(@selected_tags) and Enum.empty?(@selected_types) do %>
           <div
             class="hidden md:block md:col-span-2 lg:col-span-2 xl:col-span-2 order-none"
@@ -542,6 +559,40 @@ defmodule MethodKnowWeb.ResourceLive.Index do
      )}
   end
 
+  def handle_event("shout_form_show", %{"key" => "/"}, socket) do
+    if socket.assigns.current_scope && socket.assigns.current_scope.user do
+      {:noreply, assign(socket, :show_shout_form, true)}
+    else
+      {:noreply, socket}
+    end
+  end
+
+  def handle_event("shout_form_show", _params, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_event("shout_form_close", _params, socket) do
+    {:noreply, assign(socket, :show_shout_form, false)}
+  end
+
+  def handle_event("shout_form_submit", %{"message" => message}, socket) do
+    Phoenix.PubSub.broadcast(
+      MethodKnow.PubSub,
+      "users:shout",
+      {:shout, %{user: socket.assigns.current_scope.user, message: message}}
+    )
+
+    handle_event("shout_form_close", %{}, socket)
+  end
+
+  def handle_event("esc_close", %{"key" => "Escape"}, socket) do
+    handle_event("shout_form_close", %{}, socket)
+  end
+
+  def handle_event("esc_close", _params, socket) do
+    {:noreply, socket}
+  end
+
   def handle_event("search", %{"search" => search}, socket) do
     search = String.trim(search || "")
     selected_types = socket.assigns.selected_types
@@ -669,22 +720,33 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     {:noreply, assign(socket, online_users: online_users)}
   end
 
-  def handle_info({:resource_liked, resource_id, new_like_count}, socket) do
-    # Update the like count for the relevant resource in your assigns
-    # Example for a single resource:
-    # if socket.assigns.resource.id == resource_id do
-    #   {:noreply, assign(socket, :like_count, new_like_count)}
-    # else
-    IO.puts("Received like update for resource #{resource_id} with new count #{new_like_count}")
-    # end
+  def handle_info({:shout, %{user: user, message: message}}, socket) do
+    socket =
+      socket
+      |> assign(:shout_message, %{user: user.email, message: message})
+      |> assign(:shout_message_fading, false)
 
-    # Find the resource in the stream (or fetch from DB/context)
+    # After 9 seconds, start fading
+    Process.send_after(self(), :shout_message_fade, 9000)
+    # After 10 seconds, remove message
+    Process.send_after(self(), :shout_message_clear, 10000)
+
+    {:noreply, socket}
+  end
+
+  def handle_info(:shout_message_fade, socket) do
+    {:noreply, assign(socket, :shout_message_fading, true)}
+  end
+
+  def handle_info(:shout_message_clear, socket) do
+    {:noreply, assign(socket, :shout_message, nil)}
+  end
+
+  def handle_info({:resource_liked, resource_id, new_like_count}, socket) do
     resource =
       Resources.get_resource!(resource_id)
-      # If not already updated
       |> Map.put(:like_count, new_like_count)
 
-    # Update the resource in the stream
     {:noreply, stream_insert(socket, :resources, resource)}
   end
 

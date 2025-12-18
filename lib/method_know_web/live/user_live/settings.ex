@@ -6,9 +6,49 @@ defmodule MethodKnowWeb.UserLive.Settings do
   alias MethodKnow.Accounts
 
   @impl true
+  def mount(%{"token" => token}, _session, socket) do
+    socket =
+      case Accounts.update_user_email(socket.assigns.current_scope.user, token) do
+        {:ok, _user} ->
+          put_flash(socket, :info, "Email changed successfully.")
+
+        {:error, _} ->
+          put_flash(socket, :error, "Email change link is invalid or it has expired.")
+      end
+
+    {:ok, push_navigate(socket, to: ~p"/users/settings")}
+  end
+
+  def mount(_params, _session, socket) do
+    user = socket.assigns.current_scope.user
+    name_email_changeset = Accounts.change_user_name_email(user, %{}, validate_unique: false)
+    password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
+
+    online_users =
+      MethodKnowWeb.Presence.list("users:online")
+      |> Enum.map(fn {_id, %{metas: [meta | _]}} -> meta end)
+
+    {:ok,
+     socket
+     |> assign(
+       current_email: user.email,
+       name_email_form: to_form(name_email_changeset),
+       password_form: to_form(password_changeset),
+       trigger_submit: false,
+       hide_navbar_action: true,
+       online_users: online_users
+     )}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
-    <Layouts.app flash={@flash} current_scope={@current_scope}>
+    <Layouts.app
+      flash={@flash}
+      current_scope={@current_scope}
+      hide_navbar_action={@hide_navbar_action}
+      online_users={@online_users}
+    >
       <.header>
         Account Settings
         <:subtitle>Manage your account and profile settings</:subtitle>
@@ -87,36 +127,6 @@ defmodule MethodKnowWeb.UserLive.Settings do
   end
 
   @impl true
-  def mount(%{"token" => token}, _session, socket) do
-    socket =
-      case Accounts.update_user_email(socket.assigns.current_scope.user, token) do
-        {:ok, _user} ->
-          put_flash(socket, :info, "Email changed successfully.")
-
-        {:error, _} ->
-          put_flash(socket, :error, "Email change link is invalid or it has expired.")
-      end
-
-    {:ok, push_navigate(socket, to: ~p"/users/settings")}
-  end
-
-  def mount(_params, _session, socket) do
-    user = socket.assigns.current_scope.user
-    name_email_changeset = Accounts.change_user_name_email(user, %{}, validate_unique: false)
-    password_changeset = Accounts.change_user_password(user, %{}, hash_password: false)
-
-    socket =
-      socket
-      |> assign(:current_email, user.email)
-      |> assign(:name_email_form, to_form(name_email_changeset))
-      |> assign(:password_form, to_form(password_changeset))
-      |> assign(:trigger_submit, false)
-      |> assign(:hide_navbar_action, true)
-
-    {:ok, socket}
-  end
-
-  @impl true
 
   def handle_event("validate_name_email", params, socket) do
     %{"user" => user_params} = params
@@ -175,5 +185,17 @@ defmodule MethodKnowWeb.UserLive.Settings do
       changeset ->
         {:noreply, assign(socket, password_form: to_form(changeset, action: :insert))}
     end
+  end
+
+  @impl true
+  def handle_info(
+        %Phoenix.Socket.Broadcast{event: "presence_diff", topic: "users:online"},
+        socket
+      ) do
+    online_users =
+      MethodKnowWeb.Presence.list("users:online")
+      |> Enum.map(fn {_id, %{metas: [meta | _]}} -> meta end)
+
+    {:noreply, assign(socket, online_users: online_users)}
   end
 end
