@@ -19,7 +19,7 @@ config :method_know, MethodKnowWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}],
   check_origin: false,
   code_reloader: true,
-  debug_errors: true,
+  debug_errors: false,
   secret_key_base: "3Lc281sa3B+Wh6qMJbvAqrs5ky5bhSGLRbnuu8uN/Kv8oSUACVOnxfY8Ay1+ncvc",
   watchers: [
     esbuild: {Esbuild, :install_and_run, [:method_know, ~w(--sourcemap=inline --watch)]},

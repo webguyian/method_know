@@ -30,7 +30,7 @@ config :method_know, MethodKnowWeb.Endpoint,
   adapter: Bandit.PhoenixAdapter,
   render_errors: [
     formats: [html: MethodKnowWeb.ErrorHTML, json: MethodKnowWeb.ErrorJSON],
-    layout: false
+    layout: {MethodKnowWeb.Layouts, :root}
   ],
   pubsub_server: MethodKnow.PubSub,
   live_view: [signing_salt: "PPLOPrpl"]

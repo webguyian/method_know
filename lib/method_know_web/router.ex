@@ -17,10 +17,6 @@ defmodule MethodKnowWeb.Router do
     plug :accepts, ["json"]
   end
 
-  scope "/", MethodKnowWeb do
-    pipe_through :browser
-  end
-
   # Other scopes may use custom stacks.
   # scope "/api", MethodKnowWeb do
   #   pipe_through :api
@@ -77,5 +73,8 @@ defmodule MethodKnowWeb.Router do
     post "/users/log-in", UserSessionController, :create
     get "/users/confirm-registration/:token", UserSessionController, :confirm_registration
     delete "/users/log-out", UserSessionController, :delete
+
+    # Catch-all route for 404s to ensure the browser pipeline (session) is loaded
+    get "/*path", ErrorController, :not_found
   end
 end

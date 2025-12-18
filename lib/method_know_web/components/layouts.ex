@@ -25,7 +25,7 @@ defmodule MethodKnowWeb.Layouts do
       </Layouts.app>
 
   """
-  attr :current_scope, :map,
+  attr :current_scope, :any,
     default: nil,
     doc: "the current [scope](https://hexdocs.pm/phoenix/scopes.html)"
 
@@ -33,7 +33,7 @@ defmodule MethodKnowWeb.Layouts do
   attr :online_users, :any, default: []
   attr :hide_navbar, :boolean, default: false
   attr :hide_navbar_action, :boolean, default: false
-  slot :inner_block, required: true
+  slot :inner_block
 
   def app(assigns) do
     ~H"""
@@ -45,7 +45,11 @@ defmodule MethodKnowWeb.Layouts do
     />
     <main class="px-4 py-8 sm:px-6 lg:px-8">
       <div class="container mx-auto">
-        {render_slot(@inner_block)}
+        <%= if assigns[:inner_block] && assigns[:inner_block] != [] do %>
+          {render_slot(@inner_block)}
+        <% else %>
+          {assigns[:inner_content]}
+        <% end %>
       </div>
     </main>
 
@@ -134,7 +138,7 @@ defmodule MethodKnowWeb.Layouts do
     """
   end
 
-  attr :current_scope, :map, default: nil
+  attr :current_scope, :any, default: nil
   attr :hide_navbar, :boolean, default: false
   attr :hide_navbar_action, :boolean, default: false
   attr :online_users, :any, default: []
