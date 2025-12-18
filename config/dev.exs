@@ -5,7 +5,9 @@ config :method_know, MethodKnow.Repo,
   database: Path.expand("../method_know_dev.db", __DIR__),
   pool_size: 5,
   stacktrace: true,
-  show_sensitive_data_on_connection_error: true
+  show_sensitive_data_on_connection_error: true,
+  journal_mode: :wal,
+  busy_timeout: 5000
 
 # For development, we disable any cache and enable
 # debugging and code reloading.
