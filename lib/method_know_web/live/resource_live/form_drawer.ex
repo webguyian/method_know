@@ -236,7 +236,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
     resource_params = normalize_tags(resource_params)
     prev_params = socket.assigns[:form_params] || %{}
     merged_params = Map.merge(prev_params, resource_params)
-    merged_params = Map.put(merged_params, "tags", socket.assigns.tags)
+    merged_params = Map.put_new(merged_params, "tags", socket.assigns.tags)
 
     resource = socket.assigns[:resource] || %Resource{}
     changeset = Resources.change_resource(socket.assigns.current_scope, resource, merged_params)
@@ -249,7 +249,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
 
   def handle_event("save", %{"resource" => resource_params}, socket) do
     resource_params = normalize_tags(resource_params)
-    params = Map.put(resource_params, "tags", socket.assigns.tags)
+    params = Map.put_new(resource_params, "tags", socket.assigns.tags)
 
     # Send updated params to parent so it can keep form_params in sync
     send(self(), {:form_params_updated, params})
@@ -268,7 +268,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
 
   def handle_event("set_resource_type", %{"value" => type}, socket) do
     # Merge new type into existing params
-    params = Map.put(socket.assigns.form_params || %{}, "resource_type", type)
+    params = Map.put(socket.assigns[:form_params] || %{}, "resource_type", type)
 
     # Send updated params to parent so it can keep form_params in sync
     send(self(), {:form_params_updated, params})

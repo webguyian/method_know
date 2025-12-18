@@ -137,6 +137,59 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       assert html =~ "Share"
       assert html =~ "Cancel"
     end
+
+    test "renders code snippet fields in show mode", %{
+      conn: conn,
+      user: user,
+      scope: scope,
+      resource: resource
+    } do
+      code_resource = %{
+        resource
+        | resource_type: "code_snippet",
+          code: "IO.puts 'hi'",
+          language: "elixir"
+      }
+
+      {:ok, _view, html} =
+        live_isolated(conn, TestLive,
+          session: %{
+            "parent_pid" => self(),
+            "resource" => code_resource,
+            "current_user" => user,
+            "current_scope" => scope,
+            "form_action" => :show,
+            "title" => "Code Snippet"
+          }
+        )
+
+      assert html =~ "IO.puts &#39;hi&#39;"
+      assert html =~ "elixir"
+    end
+
+    test "renders author and url in show mode", %{
+      conn: conn,
+      user: user,
+      scope: scope,
+      resource: resource
+    } do
+      ext_resource = %{resource | author: "Test Author", url: "https://example.com"}
+
+      {:ok, _view, html} =
+        live_isolated(conn, TestLive,
+          session: %{
+            "parent_pid" => self(),
+            "resource" => ext_resource,
+            "current_user" => user,
+            "current_scope" => scope,
+            "form_action" => :show,
+            "title" => "Extended Resource"
+          }
+        )
+
+      assert html =~ "by Test Author"
+      assert html =~ "href=\"https://example.com\""
+    end
   end
 
   describe "interactions" do
@@ -229,6 +282,104 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
 
       assert_received {:received, {:resource_saved, :updated}}
       assert_received {:received, :close_drawer}
+    end
+
+    test "navigates back to resource view from edit when from_drawer is true", %{
+      conn: conn,
+      user: user,
+      scope: scope,
+      resource: resource
+    } do
+      {:ok, view, _html} =
+        live_isolated(conn, TestLive,
+          session: %{
+            "parent_pid" => self(),
+            "resource" => resource,
+            "current_user" => user,
+            "current_scope" => scope,
+            "form_action" => :edit,
+            "from_drawer" => true
+          }
+        )
+
+      view |> element("button", "Cancel") |> render_click()
+      assert_received {:received, {:show_resource, _id}}
+    end
+
+    test "normalizes string tags on validation", %{
+      conn: conn,
+      user: user,
+      scope: scope,
+      resource: resource
+    } do
+      {:ok, view, _html} =
+        live_isolated(conn, TestLive,
+          session: %{
+            "parent_pid" => self(),
+            "resource" => resource,
+            "current_user" => user,
+            "current_scope" => scope,
+            "form_action" => :edit
+          }
+        )
+
+      view
+      |> element("#resource-form")
+      |> render_change(%{"resource" => %{"tags" => "elixir, phoenix"}})
+
+      assert_received {:received, {:form_params_updated, params}}
+      assert params["tags"] == ["elixir", "phoenix"]
+    end
+
+    test "sets resource type and notifies parent", %{
+      conn: conn,
+      user: user,
+      scope: scope,
+      resource: resource
+    } do
+      {:ok, view, _html} =
+        live_isolated(conn, TestLive,
+          session: %{
+            "parent_pid" => self(),
+            "resource" => resource,
+            "current_user" => user,
+            "current_scope" => scope,
+            "form_action" => :edit
+          }
+        )
+
+      view
+      |> element("button", "Code Snippet")
+      |> render_click()
+
+      assert_received {:received, {:form_params_updated, params}}
+      assert params["resource_type"] == "code_snippet"
+    end
+
+    test "handles save error", %{
+      conn: conn,
+      user: user,
+      scope: scope,
+      resource: resource
+    } do
+      {:ok, view, _html} =
+        live_isolated(conn, TestLive,
+          session: %{
+            "parent_pid" => self(),
+            "resource" => resource,
+            "current_user" => user,
+            "current_scope" => scope,
+            "form_action" => :edit
+          }
+        )
+
+      # Attempt to save with invalid title (assuming required)
+      html =
+        view
+        |> form("#resource-form", %{resource: %{title: ""}})
+        |> render_submit()
+
+      assert html =~ "can&#39;t be blank"
     end
   end
 end

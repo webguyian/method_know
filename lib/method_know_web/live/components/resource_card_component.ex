@@ -10,6 +10,14 @@ defmodule MethodKnowWeb.ResourceCardComponent do
     - on_delete: event name for delete (optional)
     - on_show: event name for show details (optional)
   """
+  attr :id, :string, required: true
+  attr :resource, :map, required: true
+  attr :current_user, :map, default: nil
+  attr :on_edit, :string, default: nil
+  attr :on_delete, :string, default: nil
+  attr :on_show, :string, default: nil
+  attr :selected_tags, :list, default: []
+
   def render(assigns) do
     ~H"""
     <div
