@@ -106,42 +106,14 @@ defmodule MethodKnowWeb.ResourceLiveTest do
 
       refute has_element?(index_live, "#resources-#{resource.id}")
     end
-  end
 
-  describe "Show" do
-    setup [:create_resource]
-
-    test "displays resource", %{conn: conn, resource: resource} do
-      {:ok, _show_live, html} = live(conn, ~p"/resources/#{resource}")
-
-      assert html =~ "Show Resource"
-      assert html =~ resource.title
-    end
-
-    test "updates resource and returns to show", %{conn: conn, resource: resource} do
+    test "shows resource in drawer", %{conn: conn, resource: resource} do
       {:ok, index_live, _html} = live(conn, ~p"/resources")
 
-      # Open the edit drawer for the resource
-      render_click(element(index_live, "button[phx-click='edit'][phx-value-id='#{resource.id}']"))
-
-      # Interact with the form while it is open
+      # Click the show button/link
       assert index_live
-             |> form("#resource-form", resource: @invalid_attrs)
-             |> render_change() =~ "can&#39;t be blank"
-
-      assert index_live
-             |> form("#resource-form", resource: %{"resource_type" => "code_snippet"})
-             |> render_change()
-
-      # Submit valid data and do not interact with the form after submit
-      assert index_live
-             |> form("#resource-form", resource: @update_attrs)
-             |> render_submit()
-
-      # After submit, re-fetch the index_live handle to check the updated content
-      {:ok, index_live, _html} = live(conn, ~p"/resources")
-      html = render(index_live)
-      assert html =~ "some updated title"
+             |> element("button[phx-click='show'][phx-value-id='#{resource.id}']")
+             |> render_click() =~ resource.title
     end
   end
 end

@@ -51,9 +51,6 @@ defmodule MethodKnowWeb.Router do
 
       live "/resources", ResourceLive.Index, :index
       live "/my/resources", ResourceLive.Index, :my
-      live "/resources/new", ResourceLive.Form, :new
-      live "/resources/:id", ResourceLive.Show, :show
-      live "/resources/:id/edit", ResourceLive.Form, :edit
     end
 
     post "/users/update-password", UserSessionController, :update_password
