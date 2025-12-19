@@ -169,7 +169,7 @@ defmodule MethodKnowWeb.Layouts do
               <span class="font-semibold tracking-tight hidden sm:inline">Method Know</span>
             </.link>
           </div>
-          <div class="flex gap-4 items-center">
+          <div class="flex gap-2 items-center">
             <.presence
               online_users={@online_users}
               current_scope={@current_scope}
@@ -259,16 +259,27 @@ defmodule MethodKnowWeb.Layouts do
     ~H"""
     <%= if @filtered_users && Enum.any?(@filtered_users) do %>
       <div class="flex items-center gap-1 mr-2">
-        <%= for {user, idx} <- Enum.with_index(Enum.take(@filtered_users, 5)) do %>
-          <div class="relative flex flex-col items-center">
-            <.avatar user={user} show_name={false} class="size-7" />
-            <%= if @shout_message && @shout_message.user == user.email do %>
-              <.shout_bubble message={@shout_message.message} fading={@shout_message_fading} />
-            <% end %>
-            <%= if @show_shout_form && @current_scope && @current_scope.user do %>
-              <.shout_form />
+        <button
+          type="button"
+          class="group flex flex-col items-center gap-1 focus:outline-none relative"
+          phx-click="shout_form_show"
+        >
+          <div class="flex items-center gap-1">
+            <%= for {user, _idx} <- Enum.with_index(Enum.take(@filtered_users, 5)) do %>
+              <.avatar user={user} show_name={false} class="size-7" />
+              <%= if @shout_message && @shout_message.user == user.email do %>
+                <.shout_bubble message={@shout_message.message} fading={@shout_message_fading} />
+              <% end %>
             <% end %>
           </div>
+          <%= unless @shout_message do %>
+            <span class="absolute left-1/2 top-full mt-4 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 group-hover:delay-2000 pointer-events-none z-10 bg-base-200 text-base-content text-xs rounded px-3 py-1 shadow text-center whitespace-nowrap border border-base-300">
+              Tap here or type "/" to send shout
+            </span>
+          <% end %>
+        </button>
+        <%= if @show_shout_form && @current_scope && @current_scope.user do %>
+          <.shout_form />
         <% end %>
         <%= if length(@filtered_users) > 5 do %>
           <%= if shout_from_filtered_user?(@shout_message, @filtered_users) && !@shout_message_fading do %>

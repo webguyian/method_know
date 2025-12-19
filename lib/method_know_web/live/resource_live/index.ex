@@ -567,8 +567,13 @@ defmodule MethodKnowWeb.ResourceLive.Index do
     end
   end
 
-  def handle_event("shout_form_show", _params, socket) do
+  def handle_event("shout_form_show", %{"key" => _key}, socket) do
+    # Ignore other key events
     {:noreply, socket}
+  end
+
+  def handle_event("shout_form_show", %{}, socket) do
+    handle_event("shout_form_show", %{"key" => "/"}, socket)
   end
 
   def handle_event("shout_form_close", _params, socket) do
