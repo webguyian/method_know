@@ -4,7 +4,7 @@ import hljs from '../vendor/highlight/highlight.min.js';
 // Highlight all code blocks
 function highlightAllCodeBlocks() {
   if (hljs) {
-    document.querySelectorAll('pre > code').forEach((block) => {
+    document.querySelectorAll('pre > code:not(.hljs)').forEach((block) => {
       hljs.highlightElement(block);
     });
   }
