@@ -179,8 +179,18 @@ defmodule MethodKnowWeb.Layouts do
             />
             <%= if @current_scope && @current_scope.user do %>
               <%= unless @hide_navbar_action do %>
-                <.button class="lg:px-10 lg:py-2" variant="primary" phx-click="show_drawer">
-                  Share Resource
+                <.button
+                  class="lg:px-10 lg:py-2"
+                  variant="primary"
+                  phx-click="show_drawer"
+                  title="Share Resource"
+                  aria-label="Share Resource"
+                >
+                  <span class="inline sm:hidden">
+                    <Lucide.share class="size-5" />
+                    <span class="sr-only">Share Resource</span>
+                  </span>
+                  <span class="hidden sm:inline">Share Resource</span>
                 </.button>
               <% else %>
                 <Layouts.theme_toggle />
@@ -261,13 +271,34 @@ defmodule MethodKnowWeb.Layouts do
           </div>
         <% end %>
         <%= if length(@filtered_users) > 5 do %>
-          <span class="ml-1 text-xs font-medium bg-base-200 rounded-full px-2 py-1 text-base-content/70">
-            +{length(@filtered_users) - 5}
-          </span>
+          <%= if shout_from_filtered_user?(@shout_message, @filtered_users) && !@shout_message_fading do %>
+            <div class="relative flex flex-col items-center ml-1 transition-opacity duration-500">
+              <.avatar
+                user={get_user_by_email(@filtered_users, @shout_message.user)}
+                show_name={false}
+                class="size-7"
+              />
+              <.shout_bubble message={@shout_message.message} fading={@shout_message_fading} />
+            </div>
+          <% else %>
+            <span class="ml-1 text-xs font-medium bg-base-200 rounded-full px-2 py-1 text-base-content/70 transition-opacity duration-500">
+              +{length(@filtered_users) - 5}
+            </span>
+          <% end %>
         <% end %>
       </div>
     <% end %>
     """
+  end
+
+  defp get_user_by_email(users, email) do
+    Enum.find(users, fn user -> user.email == email end)
+  end
+
+  defp shout_from_filtered_user?(shout_message, filtered_users) do
+    shout_message &&
+      shout_message.user &&
+      Enum.any?(Enum.drop(filtered_users, 5), fn user -> user.email == shout_message.user end)
   end
 
   def shout_form(assigns) do
