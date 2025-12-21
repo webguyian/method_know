@@ -4,7 +4,7 @@ defmodule MethodKnow.MixProject do
   def project do
     [
       app: :method_know,
-      version: "0.1.0",
+      version: "0.1.1",
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
@@ -67,7 +67,8 @@ defmodule MethodKnow.MixProject do
       {:jason, "~> 1.2"},
       {:dns_cluster, "~> 0.2.0"},
       {:bandit, "~> 1.5"},
-      {:lucide_live_view, "~> 0.1.0"}
+      {:lucide_live_view, "~> 0.1.0"},
+      {:gen_smtp, "~> 1.0"}
     ]
   end
 

@@ -62,6 +62,8 @@ defmodule MethodKnow.Accounts.User do
     else
       changeset
     end
+
+    validate_email_domain(changeset)
   end
 
   defp validate_email_changed(changeset) do
@@ -70,6 +72,18 @@ defmodule MethodKnow.Accounts.User do
     else
       changeset
     end
+  end
+
+  defp validate_email_domain(changeset) do
+    allowed_domains = ["@example.com", "@method.com"]
+
+    validate_change(changeset, :email, fn :email, email ->
+      if String.ends_with?(email, allowed_domains) do
+        []
+      else
+        [email: "must be a valid company address"]
+      end
+    end)
   end
 
   @doc """
