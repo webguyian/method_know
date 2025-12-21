@@ -1,0 +1,67 @@
+defmodule MethodKnow.Tagging do
+  @moduledoc """
+  Provides keyphrase extraction (tag generation) using the HuggingFace Inference API.
+  """
+
+  @hf_model "ml6team/keyphrase-extraction-distilbert-inspec"
+  @hf_api_url "https://router.huggingface.co/hf-inference/models/" <> @hf_model
+
+  @doc """
+  Extracts tags (keyphrases) from the given text using the HuggingFace Inference API.
+  Returns a list of tags or an empty list on error.
+  """
+  def extract_tags(text) when is_binary(text) do
+    token = Application.get_env(:method_know, __MODULE__)[:hf_api_token]
+
+    if is_nil(token) do
+      IO.warn("No HuggingFace API token configured!")
+      []
+    else
+      headers = [
+        {"Authorization", "Bearer #{token}"},
+        {"Content-Type", "application/json"},
+        {"Accept", "application/json"}
+      ]
+
+      body = %{inputs: text} |> Jason.encode!()
+      opts = [headers: headers, body: body]
+
+      case Req.post(@hf_api_url, opts) do
+        {:ok, %{status: 200, body: resp_body}} ->
+          IO.inspect(resp_body, label: "[HuggingFace API] Response Body")
+          parse_tags(resp_body)
+
+        {:ok, %{status: status, body: resp_body}} ->
+          IO.warn("HuggingFace API error: status #{status}, body: #{inspect(resp_body)}")
+          []
+
+        {:error, reason} ->
+          IO.warn("HuggingFace API request failed: #{inspect(reason)}")
+          []
+      end
+    end
+  end
+
+  defp parse_tags(body) when is_list(body) do
+    body
+    |> Enum.sort_by(fn
+      %{"score" => score} -> -score
+      _ -> 0
+    end)
+    |> Enum.take(3)
+    |> Enum.map(fn
+      %{"word" => word} -> word
+      _ -> nil
+    end)
+    |> Enum.reject(&is_nil/1)
+  end
+
+  defp parse_tags(body) when is_binary(body) do
+    case Jason.decode(body) do
+      {:ok, list} when is_list(list) -> parse_tags(list)
+      _ -> []
+    end
+  end
+
+  defp parse_tags(_), do: []
+end

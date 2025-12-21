@@ -64,6 +64,9 @@ if config_env() == :prod do
     ],
     secret_key_base: secret_key_base
 
+  # Configure HuggingFace API token for MethodKnow.Tagging
+  config :method_know, MethodKnow.Tagging, hf_api_token: System.get_env("HF_API_TOKEN")
+
   # ## SSL Support
   #
   # To get SSL working, you will need to add the `https` key

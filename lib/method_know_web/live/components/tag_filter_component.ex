@@ -16,13 +16,15 @@ defmodule MethodKnowWeb.TagFilterComponent do
 
   @doc """
   Renders the tag filter component.
-
-  ## Assigns
-    - :tags - list of strings (the applied tags)
-    - :tag_input - string (current input value)
-    - :filtered_tags - list of strings (available tags for dropdown)
-    - :show_tag_dropdown - boolean (dropdown visibility)
   """
+  attr :all_tags, :list, default: []
+  attr :filtered_tags, :list, default: []
+  attr :generating_tags, :boolean, default: false
+  attr :resource, :map, default: %{}
+  attr :show_tag_dropdown, :boolean, default: false
+  attr :tag_input, :string, default: ""
+  attr :tags, :list, default: []
+
   @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   @impl true
   def render(assigns) do
@@ -97,6 +99,29 @@ defmodule MethodKnowWeb.TagFilterComponent do
           Add
         </button>
       </form>
+      <div class="mt-2 flex w-full">
+        <button
+          type="button"
+          class={[
+            "text-primary text-sm font-medium px-0 py-0 bg-transparent border-none hover:underline focus:underline focus:outline-none flex items-center gap-1",
+            @generating_tags && "opacity-60 cursor-wait pointer-events-none"
+          ]}
+          style="min-width: 0;"
+          phx-click="generate_tags"
+          phx-target={@myself}
+          disabled={@generating_tags}
+          id="generate-tags-btn"
+        >
+          <Lucide.sparkles class={[@generating_tags && "animate-spin", "size-4"]} />
+          <span>
+            <%= if @generating_tags do %>
+              Generating...
+            <% else %>
+              Generate tags
+            <% end %>
+          </span>
+        </button>
+      </div>
     </div>
     """
   end
@@ -147,6 +172,11 @@ defmodule MethodKnowWeb.TagFilterComponent do
     new_tags = Enum.reject(socket.assigns.tags, &(&1 == tag))
     send(self(), {:tags_updated, new_tags})
     {:noreply, assign(socket, tags: new_tags)}
+  end
+
+  def handle_event("generate_tags", _params, socket) do
+    send(self(), {:tags_generate_start, socket.assigns.resource})
+    {:noreply, socket}
   end
 
   def handle_event(_event, _params, socket), do: {:noreply, socket}

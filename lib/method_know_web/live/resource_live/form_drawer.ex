@@ -19,14 +19,15 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   end
 
   attr :all_tags, :list, required: true
+  attr :current_scope, :any, required: true
   attr :current_user, :map, required: false
-  attr :title, :string, required: true
   attr :form_action, :atom, required: true
+  attr :form, :any, required: true
+  attr :generating_tags, :boolean, required: false, default: false
+  attr :on_close, :string, required: true
   attr :resource, :map, required: true
   attr :tags, :list, required: true
-  attr :form, :any, required: true
-  attr :current_scope, :any, required: true
-  attr :on_close, :string, required: true
+  attr :title, :string, required: true
   @impl true
   def render(assigns) do
     ~H"""
@@ -114,6 +115,8 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
               id="tag-filter"
               all_tags={@all_tags}
               tags={@tags}
+              resource={@resource}
+              generating_tags={@generating_tags}
             />
           <% end %>
         </div>
@@ -212,11 +215,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
     """
   end
 
-  def handle_event("hide_form", _params, socket) do
-    send(self(), :close_drawer)
-    {:noreply, socket}
-  end
-
+  @impl true
   def handle_event("esc_close", %{"key" => "Escape"}, socket) do
     send(self(), :close_drawer)
     {:noreply, socket}
@@ -226,12 +225,16 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
     {:noreply, socket}
   end
 
+  def handle_event("hide_form", _params, socket) do
+    send(self(), :close_drawer)
+    {:noreply, socket}
+  end
+
   def handle_event("show_resource", %{"id" => id}, socket) do
     send(self(), {:show_resource, id})
     {:noreply, socket}
   end
 
-  @impl true
   def handle_event("validate", %{"resource" => resource_params}, socket) do
     resource_params = normalize_tags(resource_params)
     prev_params = socket.assigns[:form_params] || %{}

@@ -19,6 +19,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
          delete_resource_id: nil,
          form_action: :new,
          form_params: %{},
+         generating_tags: false,
          resource: %Resource{},
          resource_types: Resources.resource_types_with_labels(),
          selected_types: [],
@@ -72,6 +73,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
          form_action: :new,
          form_params: %{},
          from_drawer: false,
+         generating_tags: false,
          resource: %Resource{},
          resource_types: Resources.resource_types_with_labels(),
          selected_types: [],
@@ -252,6 +254,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
           all_tags={@all_tags}
           tags={@tags}
           selected_tags={@selected_tags}
+          generating_tags={@generating_tags}
           form_action={@form_action}
           form_params={@form_params}
           from_drawer={@from_drawer}
@@ -389,7 +392,6 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   end
 
   @impl true
-
   def handle_event("apply_filters", _params, socket) do
     selected_types = socket.assigns.maybe_selected_types || socket.assigns.selected_types
     selected_tags = socket.assigns.maybe_selected_tags || socket.assigns.selected_tags
@@ -701,6 +703,25 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   def handle_info({:tags_committed, tags}, socket) do
     {:noreply, assign(socket, all_tags: tags)}
+  end
+
+  def handle_info({:tags_generate_start, resource}, socket) do
+    socket = assign(socket, generating_tags: true)
+    liveview_pid = self()
+
+    Task.start(fn ->
+      tags = MethodKnow.Tagging.extract_tags(resource.description || "")
+      send(liveview_pid, {:tags_generated, tags})
+    end)
+
+    {:noreply, socket}
+  end
+
+  def handle_info({:tags_generated, tags}, socket) do
+    {:noreply,
+     socket
+     |> assign(generating_tags: false)
+     |> assign(tags: Enum.uniq(socket.assigns.tags ++ tags))}
   end
 
   def handle_info({:tags_updated, tags}, socket) do
