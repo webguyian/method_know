@@ -29,6 +29,7 @@ defmodule MethodKnow.Accounts.User do
   def email_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:email])
+    |> update_change(:email, &downcase_or_nil/1)
     |> validate_email(opts)
   end
 
@@ -40,6 +41,7 @@ defmodule MethodKnow.Accounts.User do
   def name_email_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:name, :email])
+    |> update_change(:email, &downcase_or_nil/1)
     |> validate_required([:name, :email])
     |> validate_length(:name, min: 1, max: 160)
     |> validate_email(opts)
@@ -103,12 +105,17 @@ defmodule MethodKnow.Accounts.User do
   def registration_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:email, :name, :password])
+    |> update_change(:email, &downcase_or_nil/1)
     |> validate_required([:name], message: "can't be blank")
     |> validate_length(:name, min: 1, max: 160)
     |> validate_email(opts)
     |> validate_confirmation(:password, message: "does not match password")
     |> validate_password(opts)
+    |> unique_constraint(:email)
   end
+
+  defp downcase_or_nil(nil), do: nil
+  defp downcase_or_nil(email) when is_binary(email), do: String.downcase(email)
 
   @doc """
   A user changeset for changing the name.

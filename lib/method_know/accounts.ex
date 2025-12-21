@@ -75,10 +75,17 @@ defmodule MethodKnow.Accounts do
 
   """
   def register_user(attrs) do
-    %User{}
-    |> User.registration_changeset(attrs)
-    |> User.confirm_changeset()
-    |> Repo.insert()
+    changeset = User.registration_changeset(%User{}, attrs)
+
+    case Repo.insert(changeset) do
+      {:ok, user} ->
+        # Set confirmed_at after successful insert
+        user = User.confirm_changeset(user) |> Repo.update!()
+        {:ok, user}
+
+      {:error, changeset} ->
+        {:error, changeset}
+    end
   end
 
   @doc """

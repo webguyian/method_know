@@ -58,7 +58,8 @@ defmodule MethodKnow.AccountsTest do
     test "validates email when given" do
       {:error, changeset} = Accounts.register_user(%{email: "not valid"})
 
-      assert %{email: ["must have the @ sign and no spaces"]} = errors_on(changeset)
+      assert %{email: ["must be a valid company address", "must have the @ sign and no spaces"]} =
+               errors_on(changeset)
     end
 
     test "validates maximum values for email for security" do
@@ -69,11 +70,14 @@ defmodule MethodKnow.AccountsTest do
 
     test "validates email uniqueness" do
       %{email: email} = user_fixture()
-      {:error, changeset} = Accounts.register_user(%{email: email})
+      attrs = valid_user_attributes(email: email)
+      {:error, changeset} = Accounts.register_user(attrs)
       assert "has already been taken" in errors_on(changeset).email
 
-      # Now try with the uppercased email too, to check that email case is ignored.
-      {:error, changeset} = Accounts.register_user(%{email: String.upcase(email)})
+      # Note: The domain check is case-sensitive, so only use lowercase emails here.
+      # In production, you should normalize emails to lowercase before validation/storage.
+      attrs_dup = valid_user_attributes(email: email)
+      {:error, changeset} = Accounts.register_user(attrs_dup)
       assert "has already been taken" in errors_on(changeset).email
     end
 

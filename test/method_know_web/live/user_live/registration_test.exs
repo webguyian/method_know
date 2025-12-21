@@ -65,13 +65,14 @@ defmodule MethodKnowWeb.UserLive.RegistrationTest do
     test "renders errors for duplicated email", %{conn: conn} do
       {:ok, lv, _html} = live(conn, ~p"/users/register")
 
-      user = user_fixture(%{email: "test@email.com"})
+      user = user_fixture(%{email: "test@example.com"})
+
+      # Use all required fields from valid_user_attributes, override email
+      attrs = valid_user_attributes(email: user.email)
 
       result =
         lv
-        |> form("#registration_form",
-          user: %{"email" => user.email}
-        )
+        |> form("#registration_form", user: attrs)
         |> render_submit()
 
       assert result =~ "has already been taken"

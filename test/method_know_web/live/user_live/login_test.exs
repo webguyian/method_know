@@ -35,7 +35,7 @@ defmodule MethodKnowWeb.UserLive.LoginTest do
       {:ok, lv, _html} = live(conn, ~p"/users/log-in")
 
       form =
-        form(lv, "#login_form_password", user: %{email: "test@email.com", password: "123456"})
+        form(lv, "#login_form_password", user: %{email: "test@example.com", password: "123456"})
 
       render_submit(form, %{user: %{remember_me: true}})
 
