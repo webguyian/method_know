@@ -116,4 +116,8 @@ if config_env() == :prod do
   #     config :swoosh, :api_client, Swoosh.ApiClient.Req
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
+
+  config :method_know, MethodKnow.Mailer,
+    adapter: Swoosh.Adapters.AmazonSES,
+    region: "us-east-1"
 end

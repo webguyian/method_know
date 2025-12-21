@@ -388,6 +388,37 @@ defmodule MethodKnow.Accounts do
   end
 
   @doc """
+  Delivers reset password instructions to the given user.
+  """
+  def deliver_user_reset_password_instructions(%User{} = user, reset_password_url_fun)
+      when is_function(reset_password_url_fun, 1) do
+    {encoded_token, user_token} = UserToken.build_reset_password_token(user)
+    Repo.insert!(user_token)
+    UserNotifier.deliver_reset_password_instructions(user, reset_password_url_fun.(encoded_token))
+  end
+
+  @doc """
+  Resets the user's password using a valid reset token.
+  Returns {:ok, user} on success, {:error, :invalid_token} if the token is invalid or expired, or {:error, changeset} if the password is invalid.
+  """
+  def reset_user_password_by_token(token, attrs) do
+    with {:ok, query} <- UserToken.verify_reset_password_token_query(token),
+         %UserToken{user_id: user_id} = user_token <- Repo.one(query),
+         %User{} = user <- Repo.get(User, user_id) do
+      case update_user_password(user, attrs) do
+        {:ok, {user, _tokens}} ->
+          Repo.delete(user_token, stale_error_field: :token, allow_stale: true)
+          {:ok, user}
+
+        {:error, changeset} ->
+          {:error, changeset}
+      end
+    else
+      _ -> {:error, :invalid_token}
+    end
+  end
+
+  @doc """
   Deletes the signed token with the given context.
   """
   def delete_user_session_token(token) do
