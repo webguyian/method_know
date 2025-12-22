@@ -1,6 +1,8 @@
 defmodule MethodKnow.Accounts.UserNotifier do
   import Swoosh.Email
 
+  require Logger
+
   alias MethodKnow.Mailer
   alias MethodKnow.Accounts.User
 
@@ -9,12 +11,17 @@ defmodule MethodKnow.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"MethodKnow", "contact@example.com"})
+      |> from({"Method Know", "no-reply@know.run.place"})
       |> subject(subject)
       |> text_body(body)
 
-    with {:ok, _metadata} <- Mailer.deliver(email) do
-      {:ok, email}
+    case Mailer.deliver(email) do
+      {:ok, _metadata} ->
+        {:ok, email}
+
+      {:error, reason} ->
+        Logger.error("Email delivery failed: #{inspect(reason)}")
+        {:error, reason}
     end
   end
 
