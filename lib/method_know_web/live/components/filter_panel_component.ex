@@ -3,12 +3,11 @@ defmodule MethodKnowWeb.FilterPanelComponent do
 
   import MethodKnowWeb.CoreComponents
 
-  attr :resource_types, :list, required: true
-  attr :selected_types, :list, required: true
   attr :all_tags, :list, required: true
-  attr :selected_tags, :list, required: true
-  attr :show_mobile_modal, :boolean, default: false
+  attr :filters, :map, required: true
   attr :id, :string, default: "filter-panel"
+  attr :resource_types, :list, required: true
+  attr :show_mobile_modal, :boolean, default: false
 
   def filter_panel(assigns) do
     ~H"""
@@ -23,7 +22,7 @@ defmodule MethodKnowWeb.FilterPanelComponent do
     >
       <header class="flex items-center justify-between">
         <h2 class="text-lg font-semibold text-base-content">Filters</h2>
-        <%= if not Enum.empty?(@selected_types) or not Enum.empty?(@selected_tags) do %>
+        <%= if not Enum.empty?(@filters.types) or not Enum.empty?(@filters.tags) do %>
           <button
             class="text-sm text-base-content underline underline-offset-4 hover:text-base-content/80 hover:no-underline transition-colors"
             id="reset-filters-btn"
@@ -48,7 +47,7 @@ defmodule MethodKnowWeb.FilterPanelComponent do
                 type="checkbox"
                 name="resource_type[]"
                 value={value}
-                checked={value in @selected_types}
+                checked={value in @filters.types}
                 class="checkbox checkbox-sm"
               />
               <span class="text-base-content/80">{label}</span>
@@ -65,7 +64,7 @@ defmodule MethodKnowWeb.FilterPanelComponent do
             <%= for tag <- @all_tags do %>
               <.tag_button
                 tag={tag}
-                active={tag in @selected_tags}
+                active={tag in @filters.tags}
                 click={if @show_mobile_modal, do: "maybe_filter_tag", else: "filter_tag"}
               />
             <% end %>

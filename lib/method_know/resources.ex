@@ -265,6 +265,72 @@ defmodule MethodKnow.Resources do
     end
   end
 
+  @doc """
+  Maps a Resource struct to a params map suitable for forms.
+  """
+  def resource_to_form_params(%Resource{} = resource) do
+    %{
+      "resource_type" => resource.resource_type,
+      "title" => resource.title,
+      "description" => resource.description,
+      "url" => resource.url,
+      "author" => resource.author,
+      "code" => resource.code,
+      "language" => resource.language,
+      "tags" => resource.tags
+    }
+  end
+
+  # Filtering helpers moved from ResourceLive.Index
+  def type_match(_resource, []), do: true
+  def type_match(resource, selected_types), do: resource.resource_type in selected_types
+
+  def tag_match(_resource, []), do: true
+
+  def tag_match(resource, selected_tags),
+    do: Enum.any?(selected_tags, &(&1 in (resource.tags || [])))
+
+  def search_match(_resource, ""), do: true
+
+  def search_match(resource, search) do
+    search = String.downcase(search)
+    search_field(resource.title, search) or search_field(resource.description, search)
+  end
+
+  def search_field(field, search) do
+    field
+    |> Kernel.||("")
+    |> String.downcase()
+    |> String.contains?(search)
+  end
+
+  @doc """
+  Returns all resources filtered by type, tag, and search.
+  """
+  def filter_resources(resources, selected_types, selected_tags, search) do
+    Enum.filter(resources, fn resource ->
+      type_match(resource, selected_types) and
+        tag_match(resource, selected_tags) and
+        search_match(resource, search)
+    end)
+  end
+
+  @doc """
+  Returns all resources, filtered by type, tag, and search.
+  """
+  def list_all_resources_filtered(selected_types, selected_tags, search) do
+    list_all_resources()
+    |> filter_resources(selected_types, selected_tags, search)
+  end
+
+  @doc """
+  Returns all resources for a user, filtered by type, tag, and search.
+  """
+  def list_resources_filtered(scope, selected_types, selected_tags, search) do
+    list_resources(scope)
+    |> filter_resources(selected_types, selected_tags, search)
+  end
+
   def list_all_tags do
     # Use a subquery to flatten all tags from all resources
     sql = """

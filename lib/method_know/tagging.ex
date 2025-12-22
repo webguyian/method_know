@@ -7,6 +7,17 @@ defmodule MethodKnow.Tagging do
   @hf_api_url "https://router.huggingface.co/hf-inference/models/" <> @hf_model
 
   @doc """
+  Orchestrates async tag extraction for a resource and sends results to the LiveView process.
+  Usage: MethodKnow.Tagging.start_tag_extraction(resource, liveview_pid)
+  """
+  def start_tag_extraction(resource, liveview_pid) do
+    Task.start(fn ->
+      tags = extract_tags(resource.description || "")
+      send(liveview_pid, {:tags_generated, tags})
+    end)
+  end
+
+  @doc """
   Extracts tags (keyphrases) from the given text using the HuggingFace Inference API.
   Returns a list of tags or an empty list on error.
   """

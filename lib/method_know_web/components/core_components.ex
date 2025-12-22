@@ -431,12 +431,7 @@ defmodule MethodKnowWeb.CoreComponents do
 
   attr :show_name, :boolean, default: true, doc: "whether to show the user's first name"
   attr :user, :map, default: nil, doc: "user struct with at least :name and :email"
-  attr :shout_message, :map, default: nil, doc: "shout message to display above avatar"
-
-  attr :shout_message_fading, :boolean,
-    default: false,
-    doc: "whether the shout message is fading out"
-
+  attr :shout, :map, default: %{user: nil, message: nil, fading: false, show_form: false}
   attr :class, :string, default: nil
 
   def avatar(assigns) do
@@ -460,8 +455,8 @@ defmodule MethodKnowWeb.CoreComponents do
       <% else %>
         <Lucide.circle_user class="size-7 text-base-content/70" />
       <% end %>
-      <%= if @shout_message && @shout_message.user == @email do %>
-        <.shout_bubble message={@shout_message.message} fading={@shout_message_fading} />
+      <%= if @shout && @shout.user == @email do %>
+        <.shout_bubble shout={@shout} />
       <% end %>
       <%= if @show_name do %>
         <span class="hidden sm:inline-block font-normal">{get_first_name(@name)}</span>
@@ -470,19 +465,18 @@ defmodule MethodKnowWeb.CoreComponents do
     """
   end
 
-  attr :message, :string, required: true
-  attr :fading, :boolean, default: false, doc: "whether the bubble is fading out"
+  attr :shout, :map, default: %{user: nil, message: nil, fading: false, show_form: false}
 
   def shout_bubble(assigns) do
     ~H"""
     <div class={[
       "absolute top-10 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center transition-opacity duration-1000",
-      @fading && "opacity-0"
+      @shout.fading && "opacity-0"
     ]}>
       <div class="w-0 h-0 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-primary">
       </div>
       <div class="bg-primary border border-primary rounded-xl shadow px-4 py-2 text-white text-sm animate-fade-in min-w-[120px] max-w-xs inline-block text-center break-words">
-        <span class="whitespace-pre-line">{@message}</span>
+        <span class="whitespace-pre-line">{@shout.message}</span>
       </div>
     </div>
     """
@@ -633,6 +627,8 @@ defmodule MethodKnowWeb.CoreComponents do
 
   # Resource type badge component
   attr :type, :string, required: true
+  attr :click, :any, default: nil
+  attr :active, :boolean, default: false
 
   def resource_type_badge(assigns) do
     [article, code_snippet, learning_resource] = Resources.resource_types()
@@ -648,9 +644,25 @@ defmodule MethodKnowWeb.CoreComponents do
     assigns = assign(assigns, icon_name: icon_name, label: label)
 
     ~H"""
-    <span class="badge badge-sm border-base-content/20 bg-transparent text-base-content font-medium p-2.5 rounded-full inline-flex items-center">
-      <Lucide.render icon={@icon_name} class="size-4 mr-1" />{@label}
-    </span>
+    <%= if @click do %>
+      <button
+        type="button"
+        phx-click={@click}
+        phx-value-resource_type={@type}
+        class={[
+          "badge badge-sm rounded-full cursor-pointer p-2 transition-colors",
+          @active && "badge-primary",
+          !@active &&
+            "border-base-content/20 bg-transparent text-base-content/80 hover:bg-base-300 hover:text-base-content"
+        ]}
+      >
+        <Lucide.render icon={@icon_name} class="size-4 mr-1" />{@label}
+      </button>
+    <% else %>
+      <span class="badge badge-sm border-base-content/20 bg-transparent text-base-content font-medium p-2.5 rounded-full inline-flex items-center">
+        <Lucide.render icon={@icon_name} class="size-4 mr-1" />{@label}
+      </span>
+    <% end %>
     """
   end
 

@@ -33,9 +33,7 @@ defmodule MethodKnowWeb.Layouts do
   attr :online_users, :any, default: []
   attr :hide_navbar, :boolean, default: false
   attr :hide_navbar_action, :boolean, default: false
-  attr :show_shout_form, :boolean, default: false
-  attr :shout_message, :any, default: nil
-  attr :shout_message_fading, :boolean, default: false
+  attr :shout, :map, default: %{user: nil, message: nil, fading: false, show_form: false}
   slot :inner_block
 
   def app(assigns) do
@@ -45,9 +43,7 @@ defmodule MethodKnowWeb.Layouts do
       online_users={@online_users}
       hide_navbar={@hide_navbar}
       hide_navbar_action={@hide_navbar_action}
-      show_shout_form={@show_shout_form}
-      shout_message={@shout_message}
-      shout_message_fading={@shout_message_fading}
+      shout={@shout}
     />
     <main class="px-4 py-8 sm:px-6 lg:px-8">
       <div class="container mx-auto">
@@ -148,9 +144,7 @@ defmodule MethodKnowWeb.Layouts do
   attr :hide_navbar, :boolean, default: false
   attr :hide_navbar_action, :boolean, default: false
   attr :online_users, :any, default: []
-  attr :show_shout_form, :boolean, default: false
-  attr :shout_message, :any, default: nil
-  attr :shout_message_fading, :boolean, default: false
+  attr :shout, :map, default: %{user: nil, message: nil, fading: false, show_form: false}
   slot :inner_block
 
   def navbar(assigns) do
@@ -173,9 +167,7 @@ defmodule MethodKnowWeb.Layouts do
             <.presence
               online_users={@online_users}
               current_scope={@current_scope}
-              show_shout_form={@show_shout_form}
-              shout_message={@shout_message}
-              shout_message_fading={@shout_message_fading}
+              shout={@shout}
             />
             <%= if @current_scope && @current_scope.user do %>
               <%= unless @hide_navbar_action do %>
@@ -199,8 +191,7 @@ defmodule MethodKnowWeb.Layouts do
                 <button type="button" class="btn btn-ghost gap-2 font-normal p-2">
                   <.avatar
                     user={@current_scope.user}
-                    shout_message={@shout_message}
-                    shout_message_fading={@shout_message_fading}
+                    shout={@shout}
                   />
                 </button>
                 <ul class="mt-3 z-[1] p-2 shadow-lg shadow-base-content/5 menu menu-sm dropdown-content bg-base-100 rounded-box w-52 border border-base-200">
@@ -242,9 +233,7 @@ defmodule MethodKnowWeb.Layouts do
   """
   attr :current_scope, :map, default: nil
   attr :online_users, :any, default: []
-  attr :show_shout_form, :boolean, default: false
-  attr :shout_message, :any, default: nil
-  attr :shout_message_fading, :boolean, default: false
+  attr :shout, :map, default: %{user: nil, message: nil, fading: false, show_form: false}
 
   def presence(assigns) do
     current_user = assigns[:current_scope] && assigns[:current_scope].user
@@ -267,29 +256,29 @@ defmodule MethodKnowWeb.Layouts do
           <div class="flex items-center gap-1">
             <%= for {user, _idx} <- Enum.with_index(Enum.take(@filtered_users, 5)) do %>
               <.avatar user={user} show_name={false} class="size-7" />
-              <%= if @shout_message && @shout_message.user == user.email do %>
-                <.shout_bubble message={@shout_message.message} fading={@shout_message_fading} />
+              <%= if @shout && @shout.user == user.email do %>
+                <.shout_bubble shout={@shout} />
               <% end %>
             <% end %>
           </div>
-          <%= unless @shout_message do %>
+          <%= unless @shout do %>
             <span class="absolute left-1/2 top-full mt-4 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 group-hover:delay-2000 pointer-events-none z-10 bg-base-200 text-base-content text-xs rounded px-3 py-1 shadow text-center whitespace-nowrap border border-base-300">
               Tap here or type "/" to send shout
             </span>
           <% end %>
         </button>
-        <%= if @show_shout_form && @current_scope && @current_scope.user do %>
+        <%= if @shout.show_form && @current_scope && @current_scope.user do %>
           <.shout_form />
         <% end %>
         <%= if length(@filtered_users) > 5 do %>
-          <%= if shout_from_filtered_user?(@shout_message, @filtered_users) && !@shout_message_fading do %>
+          <%= if shout_from_filtered_user?(@shout, @filtered_users) && !@shout.fading do %>
             <div class="relative flex flex-col items-center ml-1 transition-opacity duration-500">
               <.avatar
-                user={get_user_by_email(@filtered_users, @shout_message.user)}
+                user={get_user_by_email(@filtered_users, @shout.user)}
                 show_name={false}
                 class="size-7"
               />
-              <.shout_bubble message={@shout_message.message} fading={@shout_message_fading} />
+              <.shout_bubble shout={@shout} />
             </div>
           <% else %>
             <span class="ml-1 text-xs font-medium bg-base-200 rounded-full px-2 py-1 text-base-content/70 transition-opacity duration-500">

@@ -3,20 +3,14 @@ defmodule MethodKnowWeb.ResourceCardComponent do
 
   @doc """
   Renders a resource card.
-  Expects assigns:
-    - resource: the resource struct
-    - current_user: the current user struct (optional, for actions)
-    - on_edit: event name for edit (optional)
-    - on_delete: event name for delete (optional)
-    - on_show: event name for show details (optional)
   """
-  attr :id, :string, required: true
-  attr :resource, :map, required: true
   attr :current_user, :map, default: nil
-  attr :on_edit, :string, default: nil
+  attr :filters, :map, default: %{tags: [], types: []}
+  attr :id, :string, required: true
   attr :on_delete, :string, default: nil
+  attr :on_edit, :string, default: nil
   attr :on_show, :string, default: nil
-  attr :selected_tags, :list, default: []
+  attr :resource, :map, required: true
 
   def render(assigns) do
     ~H"""
@@ -25,7 +19,11 @@ defmodule MethodKnowWeb.ResourceCardComponent do
       id={"resources-#{@resource.id}"}
     >
       <div class="flex items-center justify-between px-4 pt-4 pb-2">
-        <.resource_type_badge type={@resource.resource_type} />
+        <.resource_type_badge
+          type={@resource.resource_type}
+          active={@filters && @resource.resource_type in @filters.types}
+          click="filter_type"
+        />
 
         <div class="flex gap-2">
           <%= if @current_user && @resource.user_id == @current_user.id do %>
@@ -76,7 +74,7 @@ defmodule MethodKnowWeb.ResourceCardComponent do
           <%= for tag <- (@resource.tags || []) do %>
             <.tag_button
               tag={tag}
-              active={assigns[:selected_tags] && tag in assigns.selected_tags}
+              active={@filters && tag in @filters.tags}
               click="filter_tag"
             />
           <% end %>

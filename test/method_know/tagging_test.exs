@@ -13,6 +13,22 @@ defmodule MethodKnow.TaggingTest do
     :ok
   end
 
+  describe "start_tag_extraction/2" do
+    test "sends tags_generated message" do
+      Application.put_env(:method_know, MethodKnow.Tagging, hf_api_token: "token")
+
+      MethodKnow.ReqMock
+      |> Mox.expect(:post, fn _url, _opts ->
+        {:ok, %{status: 200, body: [%{"word" => "elixir", "score" => 0.9}]}}
+      end)
+
+      resource = %{description: "elixir"}
+      MethodKnow.Tagging.start_tag_extraction(resource, self())
+
+      assert_receive {:tags_generated, ["elixir"]}, 1000
+    end
+  end
+
   describe "extract_tags/1" do
     test "returns [] if no token configured and warns" do
       Application.delete_env(:method_know, MethodKnow.Tagging)
