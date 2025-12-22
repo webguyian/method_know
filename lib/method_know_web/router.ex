@@ -17,6 +17,10 @@ defmodule MethodKnowWeb.Router do
     plug :accepts, ["json"]
   end
 
+  pipeline :dashboard_auth do
+    plug :auth
+  end
+
   # Other scopes may use custom stacks.
   # scope "/api", MethodKnowWeb do
   #   pipe_through :api
@@ -36,6 +40,17 @@ defmodule MethodKnowWeb.Router do
 
       live_dashboard "/dashboard", metrics: MethodKnowWeb.Telemetry
       forward "/mailbox", Plug.Swoosh.MailboxPreview
+    end
+  end
+
+  # Enable LiveDashboard in production, protected by Basic Auth
+  if Application.compile_env(:method_know, :prod_dashboard, false) do
+    import Phoenix.LiveDashboard.Router
+
+    scope "/" do
+      pipe_through [:browser, :dashboard_auth]
+
+      live_dashboard "/dashboard", metrics: MethodKnowWeb.Telemetry
     end
   end
 
@@ -75,5 +90,11 @@ defmodule MethodKnowWeb.Router do
 
     # Catch-all route for 404s to ensure the browser pipeline (session) is loaded
     get "/*path", ErrorController, :not_found
+  end
+
+  defp auth(conn, _opts) do
+    username = System.get_env("AUTH_USERNAME") || "admin"
+    password = System.get_env("AUTH_PASSWORD") || "a-very-long-random-password@123!"
+    Plug.BasicAuth.basic_auth(conn, username: username, password: password)
   end
 end

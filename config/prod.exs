@@ -15,6 +15,9 @@ config :method_know, MethodKnowWeb.Endpoint,
   server: true,
   check_origin: ["//know.run.place"]
 
+# Enable the production dashboard
+config :method_know, :prod_dashboard, true
+
 # Configure Swoosh API Client
 config :swoosh, api_client: Swoosh.ApiClient.Req
 
