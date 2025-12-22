@@ -19,6 +19,7 @@ defmodule MethodKnowWeb.LikeButtonComponent do
           id={@id}
           phx-target={@myself}
           phx-click="toggle_like"
+          phx-hook=".LikeButton"
           class={[
             "flex items-center gap-1 text-base-content/70 cursor-pointer hover:text-pink-600 transition-colors",
             @liked_by_user && "text-pink-600"
@@ -34,6 +35,34 @@ defmodule MethodKnowWeb.LikeButtonComponent do
           ]} />
           <span class="ml-1 text-sm font-medium">{@likes_count}</span>
         </button>
+        <script :type={Phoenix.LiveView.ColocatedHook} name=".LikeButton">
+          export default {
+          mounted() {
+            const animationClass = "animate-[pop_0.4s_cubic-bezier(0.175,0.885,0.32,1.27)_forwards]";
+            const fillClass = "fill-pink-600";
+            const textClass = "text-pink-600";
+            const btnClasses = [fillClass, textClass, animationClass];
+
+            this.handleEvent("resource_liked", ({ resource_id }) => {
+              if (this.el.id === `like-btn-${resource_id}`) {
+                this.el.classList.add(textClass);
+                const heart = this.el.querySelector("svg");
+                if (heart) {
+                  heart.classList.add(...btnClasses);
+                  heart.addEventListener(
+                    "animationend",
+                    () => {
+                      this.el.classList.remove(textClass);
+                      heart.classList.remove(...btnClasses);
+                    },
+                    { once: true }
+                  );
+                }
+              }
+            });
+          }
+          }
+        </script>
       <% else %>
         <a
           id={"#{@id}-link"}

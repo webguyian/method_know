@@ -8,30 +8,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   @impl true
   def mount(_params, _session, %{assigns: %{current_scope: current_scope}} = socket) do
-    connected = connected?(socket) and not is_nil(current_scope)
-
-    online_users =
-      if connected do
-        Resources.subscribe_resources(current_scope)
-        user = current_scope.user
-
-        {:ok, _} =
-          MethodKnowWeb.Presence.track(self(), "users:online", user.id, %{
-            name: user.name,
-            email: user.email
-          })
-
-        Phoenix.PubSub.subscribe(MethodKnow.PubSub, "resources")
-        Phoenix.PubSub.subscribe(MethodKnow.PubSub, "users:online")
-        Phoenix.PubSub.subscribe(MethodKnow.PubSub, "users:shout")
-
-        MethodKnowWeb.Presence.list("users:online")
-        |> Enum.map(fn {_id, %{metas: [meta | _]}} -> meta end)
-      else
-        []
-      end
-
     my_resources? = socket.assigns.live_action == :my
+    online_users = fetch_online_users(current_scope, socket)
 
     {:ok,
      socket
@@ -549,7 +527,10 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       Resources.get_resource!(resource_id)
       |> Map.put(:like_count, new_like_count)
 
-    {:noreply, stream_insert(socket, :resources, resource)}
+    {:noreply,
+     socket
+     |> stream_insert(:resources, resource)
+     |> push_event("resource_liked", %{resource_id: resource_id})}
   end
 
   defp default_assigns(_socket, my_resources?, online_users) do
@@ -579,6 +560,28 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       toast: %{action: nil, message: nil, visible: false},
       total_resource_count: 0
     ]
+  end
+
+  defp fetch_online_users(current_scope, socket) do
+    if connected?(socket) and not is_nil(current_scope) do
+      Resources.subscribe_resources(current_scope)
+      user = current_scope.user
+
+      {:ok, _} =
+        MethodKnowWeb.Presence.track(self(), "users:online", user.id, %{
+          name: user.name,
+          email: user.email
+        })
+
+      Phoenix.PubSub.subscribe(MethodKnow.PubSub, "resources")
+      Phoenix.PubSub.subscribe(MethodKnow.PubSub, "users:online")
+      Phoenix.PubSub.subscribe(MethodKnow.PubSub, "users:shout")
+
+      MethodKnowWeb.Presence.list("users:online")
+      |> Enum.map(fn {_id, %{metas: [meta | _]}} -> meta end)
+    else
+      []
+    end
   end
 
   defp get_resources(assigns, selected_types \\ [], selected_tags \\ [], search \\ "") do
