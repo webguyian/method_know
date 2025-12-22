@@ -1,6 +1,8 @@
 defmodule MethodKnowWeb.UserLive.ResetPassword do
   use MethodKnowWeb, :live_view
 
+  alias MethodKnow.Accounts
+
   @impl true
   def render(assigns) do
     ~H"""
@@ -47,8 +49,8 @@ defmodule MethodKnowWeb.UserLive.ResetPassword do
 
   @impl true
   def handle_event("send_reset", %{"user" => %{"email" => email}}, socket) do
-    if user = MethodKnow.Accounts.get_user_by_email(email) do
-      MethodKnow.Accounts.deliver_user_reset_password_instructions(user, fn token ->
+    if user = Accounts.get_user_by_email(email) do
+      Accounts.deliver_user_reset_password_instructions(user, fn token ->
         Phoenix.VerifiedRoutes.url(
           MethodKnowWeb.Endpoint,
           MethodKnowWeb.Router,

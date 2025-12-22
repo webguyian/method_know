@@ -14,9 +14,11 @@ defmodule MethodKnow.Accounts.UserNotifier do
       |> from({"Method Know", "no-reply@know.run.place"})
       |> subject(subject)
       |> text_body(body)
+      |> header("X-SES-CONFIGURATION-SET", "debug-events")
 
     case Mailer.deliver(email) do
-      {:ok, _metadata} ->
+      {:ok, metadata} ->
+        Logger.info("Email sent with: #{inspect(metadata)}")
         {:ok, email}
 
       {:error, reason} ->
@@ -93,19 +95,36 @@ defmodule MethodKnow.Accounts.UserNotifier do
   Deliver instructions to reset a user's password.
   """
   def deliver_reset_password_instructions(user, url) do
-    deliver(user.email, "Reset password instructions", """
+    Logger.info(
+      "Attempting to send reset password instructions to #{user.email} (user_id: #{user.id})"
+    )
 
-    ==============================
+    result =
+      deliver(user.email, "Reset password instructions", """
 
-    Hi #{user.email},
+      ==============================
 
-    You can reset your password by visiting the URL below:
+      Hi #{user.email},
 
-    #{url}
+      You can reset your password by visiting the URL below:
 
-    If you didn't request this, please ignore this.
+      #{url}
 
-    ==============================
-    """)
+      If you didn't request this, please ignore this.
+
+      ==============================
+      """)
+
+    case result do
+      {:ok, _email} ->
+        Logger.info("Successfully sent reset password instructions to #{user.email}")
+
+      {:error, reason} ->
+        Logger.error(
+          "Failed to send reset password instructions to #{user.email}: #{inspect(reason)}"
+        )
+    end
+
+    result
   end
 end
