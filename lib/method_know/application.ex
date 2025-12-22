@@ -21,15 +21,6 @@ defmodule MethodKnow.Application do
       MethodKnowWeb.Endpoint
     ]
 
-    :telemetry.attach(
-      "swoosh-mailer-logger",
-      [:swoosh, :email, :deliver, :stop],
-      fn event_name, measurements, metadata, _config ->
-        IO.inspect({event_name, measurements, metadata}, label: "Swoosh Telemetry Event")
-      end,
-      nil
-    )
-
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: MethodKnow.Supervisor]

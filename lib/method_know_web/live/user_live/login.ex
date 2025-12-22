@@ -77,13 +77,6 @@ defmodule MethodKnowWeb.UserLive.Login do
                     phx-no-format
                   >Sign up</.link>
                 </p>
-                <p class="text-sm text-base-content/70 text-center pt-2">
-                  <.link
-                    navigate={~p"/users/reset-password"}
-                    class="text-primary underline underline-offset-3"
-                    phx-no-format
-                  >Forgot password?</.link>
-                </p>
               <% end %>
             </.form>
           </div>

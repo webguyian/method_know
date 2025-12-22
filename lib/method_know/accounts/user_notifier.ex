@@ -1,8 +1,6 @@
 defmodule MethodKnow.Accounts.UserNotifier do
   import Swoosh.Email
 
-  require Logger
-
   alias MethodKnow.Mailer
   alias MethodKnow.Accounts.User
 
@@ -11,19 +9,12 @@ defmodule MethodKnow.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"Method Know", "no-reply@know.run.place"})
+      |> from({"MethodKnow", "contact@example.com"})
       |> subject(subject)
       |> text_body(body)
-      |> header("X-SES-CONFIGURATION-SET", "debug-events")
 
-    case Mailer.deliver(email) do
-      {:ok, metadata} ->
-        Logger.info("Email sent with: #{inspect(metadata)}")
-        {:ok, email}
-
-      {:error, reason} ->
-        Logger.error("Email delivery failed: #{inspect(reason)}")
-        {:error, reason}
+    with {:ok, _metadata} <- Mailer.deliver(email) do
+      {:ok, email}
     end
   end
 
@@ -89,42 +80,5 @@ defmodule MethodKnow.Accounts.UserNotifier do
 
     ==============================
     """)
-  end
-
-  @doc """
-  Deliver instructions to reset a user's password.
-  """
-  def deliver_reset_password_instructions(user, url) do
-    Logger.info(
-      "Attempting to send reset password instructions to #{user.email} (user_id: #{user.id})"
-    )
-
-    result =
-      deliver(user.email, "Reset password instructions", """
-
-      ==============================
-
-      Hi #{user.email},
-
-      You can reset your password by visiting the URL below:
-
-      #{url}
-
-      If you didn't request this, please ignore this.
-
-      ==============================
-      """)
-
-    case result do
-      {:ok, _email} ->
-        Logger.info("Successfully sent reset password instructions to #{user.email}")
-
-      {:error, reason} ->
-        Logger.error(
-          "Failed to send reset password instructions to #{user.email}: #{inspect(reason)}"
-        )
-    end
-
-    result
   end
 end

@@ -116,10 +116,4 @@ if config_env() == :prod do
   #     config :swoosh, :api_client, Swoosh.ApiClient.Req
   #
   # See https://hexdocs.pm/swoosh/Swoosh.html#module-installation for details.
-
-  config :method_know, MethodKnow.Mailer,
-    adapter: Swoosh.Adapters.AmazonSES,
-    access_key: System.get_env("AWS_SES_ACCESS_KEY"),
-    secret: System.get_env("AWS_SES_SECRET"),
-    region: "us-east-1"
 end
