@@ -11,7 +11,10 @@ defmodule MethodKnowWeb.UserLive.ConfirmationTest do
   end
 
   describe "Confirm user" do
-    test "can view page for unconfirmed user with password but submit will fail", %{conn: conn, unconfirmed_user: user} do
+    test "can view page for unconfirmed user with password but submit will fail", %{
+      conn: conn,
+      unconfirmed_user: user
+    } do
       # Since registration now requires passwords, all unconfirmed users have passwords.
       # They can view the confirmation page, but the actual login attempt will raise an error.
       token =
