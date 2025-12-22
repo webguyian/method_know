@@ -26,9 +26,10 @@ defmodule MethodKnow.Tagging do
       body = %{inputs: text} |> Jason.encode!()
       opts = [headers: headers, body: body]
 
-      case Req.post(@hf_api_url, opts) do
+      req_mod = Application.get_env(:method_know, :req, Req)
+
+      case req_mod.post(@hf_api_url, opts) do
         {:ok, %{status: 200, body: resp_body}} ->
-          IO.inspect(resp_body, label: "[HuggingFace API] Response Body")
           parse_tags(resp_body)
 
         {:ok, %{status: status, body: resp_body}} ->

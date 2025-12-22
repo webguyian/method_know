@@ -1,5 +1,8 @@
 import Config
 
+# Use ReqMock for HTTP requests in tests
+config :method_know, :req, MethodKnow.ReqMock
+
 # Only in tests, remove the complexity from the password hashing algorithm
 config :bcrypt_elixir, :log_rounds, 1
 
