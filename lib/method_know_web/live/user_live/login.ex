@@ -6,7 +6,7 @@ defmodule MethodKnowWeb.UserLive.Login do
     ~H"""
     <Layouts.app flash={@flash} current_scope={@current_scope}>
       <div class="flex min-h-full flex-col justify-center py-6 sm:px-6 lg:px-8">
-        <div class="sm:mx-auto sm:w-full sm:max-w-md text-center mb-8">
+        <div class="sm:mx-auto sm:w-full sm:max-w-lg text-center mb-8">
           <div class="mx-auto size-16 rounded-full bg-black text-white flex items-center justify-center mb-4">
             <Lucide.book_marked class="size-9" />
           </div>
@@ -26,7 +26,7 @@ defmodule MethodKnowWeb.UserLive.Login do
           </p>
         </div>
 
-        <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="sm:mx-auto sm:w-full sm:max-w-lg">
           <div class="bg-base-100 p-4 shadow-xl shadow-base-content/5 rounded-2xl border border-base-300">
             <.form
               :let={f}

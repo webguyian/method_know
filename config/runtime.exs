@@ -119,5 +119,7 @@ if config_env() == :prod do
 
   config :method_know, MethodKnow.Mailer,
     adapter: Swoosh.Adapters.AmazonSES,
+    access_key: System.get_env("AWS_SES_ACCESS_KEY"),
+    secret: System.get_env("AWS_SES_SECRET"),
     region: "us-east-1"
 end
