@@ -21,22 +21,35 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   attr :all_tags, :list, required: true
   attr :current_scope, :any, required: true
   attr :current_user, :map, required: false
-  attr :form_action, :atom, required: true
   attr :form, :any, required: true
+  attr :form_action, :atom, required: true
+  attr :form_params, :map, required: false
+  attr :from_drawer, :boolean, required: false, default: false
   attr :generating_tags, :boolean, required: false, default: false
   attr :on_close, :string, required: true
   attr :resource, :map, required: true
+  attr :return_to, :string, required: false
+  attr :show_drawer, :boolean, required: true
+  attr :selected_tags, :list, required: false, default: []
   attr :tags, :list, required: true
   attr :title, :string, required: true
   @impl true
   def render(assigns) do
     ~H"""
     <div
-      class="fixed inset-0 z-40 flex"
+      class={[
+        "fixed inset-0 z-40 flex transition-opacity duration-300",
+        @show_drawer && "opacity-100 pointer-events-auto",
+        !@show_drawer && "opacity-0 pointer-events-none"
+      ]}
       phx-mounted={JS.add_class("overflow-hidden", to: "body")}
     >
       <div
-        class="fixed inset-0 bg-black/30 transition-opacity"
+        class={[
+          "fixed inset-0 bg-black/30 transition-opacity duration-300",
+          @show_drawer && "opacity-100 pointer-events-auto",
+          !@show_drawer && "opacity-0 pointer-events-none"
+        ]}
         aria-hidden="true"
         phx-click={@on_close}
         phx-target={@myself}
@@ -44,7 +57,14 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
         phx-window-keyup="esc_close"
       >
       </div>
-      <div class="w-full h-full rounded-none md:my-auto md:ml-auto md:mr-10 md:h-[85%] md:max-w-[490px] md:rounded-xl bg-base-100 shadow-xl flex flex-col animate-slide-in-right relative md:translate-y-6">
+      <div
+        id="form-drawer"
+        class={[
+          "w-full h-full rounded-none md:my-auto md:ml-auto md:mr-10 md:h-[85%] md:max-w-[490px] md:rounded-xl bg-base-100 shadow-xl flex flex-col relative md:translate-y-6 transition-transform duration-300 ease-in-out",
+          @show_drawer && "translate-x-0",
+          !@show_drawer && "translate-x-full"
+        ]}
+      >
         <div class="flex items-start justify-between p-6 pb-0">
           <header class="w-full">
             <%= if @form_action == :show do %>

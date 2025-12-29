@@ -211,7 +211,7 @@ defmodule MethodKnowWeb.ResourceLiveTest do
       assert render(index_live) =~ "Share a resource"
       send(index_live.pid, :close_drawer)
       html = render(index_live)
-      refute html =~ "Share a resource"
+      assert html =~ "translate-x-full"
     end
 
     test "shows resource in drawer", %{conn: conn, resource: resource} do

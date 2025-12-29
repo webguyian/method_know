@@ -175,7 +175,6 @@ defmodule MethodKnowWeb.Layouts do
                   class="lg:px-10 lg:py-2"
                   variant="primary"
                   phx-click="show_drawer"
-                  title="Share Resource"
                   aria-label="Share Resource"
                 >
                   <span class="inline sm:hidden">

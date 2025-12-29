@@ -115,25 +115,24 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         <% end %>
       </div>
 
-      <%= if @show_drawer do %>
-        <.live_component
-          module={MethodKnowWeb.ResourceLive.FormDrawer}
-          id="resource-form-drawer"
-          all_tags={@all_tags}
-          current_scope={@current_scope}
-          current_user={@current_scope && @current_scope.user}
-          form_action={@form_action}
-          form_params={@form_params}
-          from_drawer={@from_drawer}
-          generating_tags={@generating_tags}
-          on_close="hide_form"
-          resource={@resource}
-          return_to={~p"/resources"}
-          selected_tags={@selected_tags}
-          tags={@tags}
-          title={@form_title}
-        />
-      <% end %>
+      <.live_component
+        module={MethodKnowWeb.ResourceLive.FormDrawer}
+        id="resource-form-drawer"
+        all_tags={@all_tags}
+        current_scope={@current_scope}
+        current_user={@current_scope && @current_scope.user}
+        form_action={@form_action}
+        form_params={@form_params}
+        from_drawer={@from_drawer}
+        generating_tags={@generating_tags}
+        on_close="hide_form"
+        resource={@resource}
+        return_to={~p"/resources"}
+        show_drawer={@show_drawer}
+        selected_tags={@selected_tags}
+        tags={@tags}
+        title={@form_title}
+      />
 
       <.delete_modal
         show={@show_delete_modal}
@@ -541,6 +540,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       filtered_resource_count: 0,
       form_action: :new,
       form_params: %{},
+      form_title: "Share a resource",
       from_drawer: false,
       generating_tags: false,
       online_users: online_users,

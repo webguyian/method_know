@@ -23,6 +23,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
         form={@form}
         on_close="hide_form"
         from_drawer={@from_drawer}
+        show_drawer={@show_drawer}
       />
       """
     end
@@ -43,7 +44,8 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
          resource: resource,
          tags: session["tags"] || [],
          form: to_form(changeset),
-         from_drawer: session["from_drawer"] || false
+         from_drawer: session["from_drawer"] || false,
+         show_drawer: Map.get(session, "show_drawer", true)
        )}
     end
 
@@ -76,6 +78,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       {:ok, _view, html} =
         live_isolated(conn, TestLive,
           session: %{
+            "show_drawer" => true,
             "parent_pid" => self(),
             "resource" => resource,
             "current_user" => user,
@@ -103,6 +106,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       {:ok, _view, html} =
         live_isolated(conn, TestLive,
           session: %{
+            "show_drawer" => true,
             "parent_pid" => self(),
             "resource" => resource,
             "current_user" => user,
@@ -125,6 +129,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       {:ok, _view, html} =
         live_isolated(conn, TestLive,
           session: %{
+            "show_drawer" => true,
             "parent_pid" => self(),
             "current_user" => user,
             "current_scope" => scope,
@@ -154,6 +159,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       {:ok, _view, html} =
         live_isolated(conn, TestLive,
           session: %{
+            "show_drawer" => true,
             "parent_pid" => self(),
             "resource" => code_resource,
             "current_user" => user,
@@ -178,6 +184,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       {:ok, _view, html} =
         live_isolated(conn, TestLive,
           session: %{
+            "show_drawer" => true,
             "parent_pid" => self(),
             "resource" => ext_resource,
             "current_user" => user,
@@ -202,6 +209,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       {:ok, view, _html} =
         live_isolated(conn, TestLive,
           session: %{
+            "show_drawer" => true,
             "parent_pid" => self(),
             "resource" => resource,
             "current_user" => user,
@@ -223,6 +231,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       {:ok, view, _html} =
         live_isolated(conn, TestLive,
           session: %{
+            "show_drawer" => true,
             "parent_pid" => self(),
             "resource" => resource,
             "current_user" => user,
@@ -244,6 +253,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       {:ok, view, _html} =
         live_isolated(conn, TestLive,
           session: %{
+            "show_drawer" => true,
             "parent_pid" => self(),
             "resource" => resource,
             "current_user" => user,
