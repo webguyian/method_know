@@ -171,19 +171,8 @@ defmodule MethodKnowWeb.ResourceLive.Index do
 
   def handle_event("edit", %{"id" => id}, socket) do
     resource = Resources.get_resource!(socket.assigns.current_scope, id)
-    form_params = Resources.resource_to_form_params(resource)
 
-    {:noreply,
-     socket
-     |> assign(
-       form_action: :edit,
-       form_title: "Edit resource",
-       resource: resource,
-       form_params: form_params,
-       show_drawer: true,
-       tags: resource.tags,
-       from_drawer: false
-     )}
+    {:noreply, socket |> show_drawer(:edit, resource)}
   end
 
   def handle_event("edit_from_drawer", %{"id" => id}, socket) do
@@ -299,17 +288,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   def handle_event("show", %{"id" => id}, socket) do
     resource = Resources.get_resource!(id)
 
-    {:noreply,
-     socket
-     |> assign(
-       form_action: :show,
-       form_title: resource.title,
-       resource: resource,
-       form_params: %{},
-       show_drawer: true,
-       tags: resource.tags,
-       from_drawer: false
-     )}
+    {:noreply, socket |> show_drawer(:show, resource)}
   end
 
   def handle_event("shout_form_show", %{"key" => "/"}, socket) do
@@ -367,17 +346,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
   end
 
   def handle_event("show_drawer", _params, socket) do
-    {:noreply,
-     socket
-     |> assign(
-       form_action: :new,
-       form_title: "Share a resource",
-       form_params: %{},
-       resource: %Resource{},
-       show_drawer: true,
-       tags: [],
-       from_drawer: false
-     )}
+    {:noreply, socket |> show_drawer(:new)}
   end
 
   def handle_event("toggle_filters", _params, socket) do
@@ -612,6 +581,32 @@ defmodule MethodKnowWeb.ResourceLive.Index do
       total = Resources.list_all_resources_filtered(selected_types, selected_tags, "")
       {filtered, total}
     end
+  end
+
+  defp show_drawer(socket, form_action, resource \\ %Resource{}) do
+    {form_title, form_params, tags} =
+      case form_action do
+        :edit ->
+          {"Edit resource", Resources.resource_to_form_params(resource), resource.tags}
+
+        :show ->
+          {resource.title, %{}, resource.tags}
+
+        :new ->
+          {"Share a resource", Resources.resource_to_form_params(resource), []}
+      end
+
+    socket
+    |> assign(%{
+      form_action: form_action,
+      form_title: form_title,
+      resource: resource,
+      form_params: form_params,
+      show_drawer: true,
+      tags: tags,
+      from_drawer: false
+    })
+    |> push_event("drawer_opened", %{})
   end
 
   defp show_toast(socket, message, action \\ nil) do

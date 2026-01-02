@@ -92,6 +92,10 @@ if (process.env.NODE_ENV === 'development') {
   );
 }
 
+window.addEventListener('phx:drawer_opened', () => {
+  document.body.classList.add('overflow-hidden');
+});
+
 window.addEventListener('phx:drawer_closed', () => {
   document.body.classList.remove('overflow-hidden');
 });

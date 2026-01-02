@@ -36,14 +36,11 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   @impl true
   def render(assigns) do
     ~H"""
-    <div
-      class={[
-        "fixed inset-0 z-40 flex transition-opacity duration-300",
-        @show_drawer && "opacity-100 pointer-events-auto",
-        !@show_drawer && "opacity-0 pointer-events-none"
-      ]}
-      phx-mounted={JS.add_class("overflow-hidden", to: "body")}
-    >
+    <div class={[
+      "fixed inset-0 z-40 flex transition-opacity duration-300",
+      @show_drawer && "opacity-100 pointer-events-auto",
+      !@show_drawer && "opacity-0 pointer-events-none"
+    ]}>
       <div
         class={[
           "fixed inset-0 bg-black/30 transition-opacity duration-300",
