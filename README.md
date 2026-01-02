@@ -2,6 +2,8 @@
 
 _Real-Time Knowledge Sharing with Phoenix LiveView_
 
+![Screenshot](./assets/img/screenshot.jpg)
+
 ## Tech Stack
 
 - [Elixir](https://elixir-lang.org/) (>= 1.16)
