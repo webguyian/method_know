@@ -9,7 +9,7 @@ defmodule MethodKnow.Accounts.UserNotifier do
     email =
       new()
       |> to(recipient)
-      |> from({"MethodKnow", "contact@example.com"})
+      |> from({"Method Know", "no-reply@mg.know.run.place"})
       |> subject(subject)
       |> text_body(body)
 
