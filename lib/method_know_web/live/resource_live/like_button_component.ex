@@ -24,7 +24,7 @@ defmodule MethodKnowWeb.LikeButtonComponent do
             "flex items-center gap-1 text-base-content/70 cursor-pointer hover:text-pink-600 transition-colors",
             @liked_by_user && "text-pink-600"
           ]}
-          aria-pressed={@liked_by_user}
+          aria-pressed={if @liked_by_user, do: "true", else: "false"}
           title={(@liked_by_user && "Unlike") || "Like"}
         >
           <Lucide.heart class={[
@@ -37,30 +37,37 @@ defmodule MethodKnowWeb.LikeButtonComponent do
         </button>
         <script :type={Phoenix.LiveView.ColocatedHook} name=".LikeButton">
           export default {
-          mounted() {
-            const animationClass = "animate-[pop_0.4s_cubic-bezier(0.175,0.885,0.32,1.27)_forwards]";
-            const fillClass = "fill-pink-600";
-            const textClass = "text-pink-600";
-            const btnClasses = [fillClass, textClass, animationClass];
+            mounted() {
+              const animationClass = "animate-[pop_0.4s_cubic-bezier(0.175,0.885,0.32,1.27)_forwards]";
+              const fillClass = "fill-pink-600";
+              const textClass = "text-pink-600";
+              const btnClasses = [fillClass, textClass, animationClass];
 
-            this.handleEvent("resource_liked", ({ resource_id }) => {
-              if (this.el.id === `like-btn-${resource_id}`) {
-                this.el.classList.add(textClass);
-                const heart = this.el.querySelector("svg");
-                if (heart) {
-                  heart.classList.add(...btnClasses);
-                  heart.addEventListener(
-                    "animationend",
-                    () => {
-                      this.el.classList.remove(textClass);
-                      heart.classList.remove(...btnClasses);
-                    },
-                    { once: true }
-                  );
+              this.handleEvent("resource_liked", ({ resource_id }) => {
+                if (this.el.id === `like-btn-${resource_id}`) {
+                  this.el.classList.add(textClass);
+                  const heart = this.el.querySelector("svg");
+                  if (heart) {
+                    heart.classList.add(...btnClasses);
+                    heart.addEventListener(
+                      "animationend",
+                      () => {
+                        // Only remove classes if button is not originally in liked state
+                        const isLiked = this.el.getAttribute("aria-pressed") === "true";
+                        if (!isLiked) {
+                          this.el.classList.remove(textClass);
+                          heart.classList.remove(...btnClasses);
+                        } else {
+                          // Keep the classes if liked by current user
+                          heart.classList.remove(animationClass);
+                        }
+                      },
+                      { once: true }
+                    );
+                  }
                 }
-              }
-            });
-          }
+              });
+            }
           }
         </script>
       <% else %>
