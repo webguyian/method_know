@@ -69,6 +69,9 @@ config :method_know, MethodKnowWeb.Endpoint,
 # Enable dev routes for dashboard and mailbox
 config :method_know, dev_routes: true
 
+# Configure HuggingFace API token for MethodKnow.Tagging
+config :method_know, MethodKnow.Tagging, hf_api_token: System.get_env("HF_API_TOKEN")
+
 # Do not include metadata nor timestamps in development logs
 config :logger, :default_formatter, format: "[$level] $message\n"
 
