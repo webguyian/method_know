@@ -121,6 +121,7 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         all_tags={@all_tags}
         current_scope={@current_scope}
         current_user={@current_scope && @current_scope.user}
+        filters={%{tags: @selected_tags, types: @selected_types}}
         form_action={@form_action}
         form_params={@form_params}
         from_drawer={@from_drawer}
@@ -129,7 +130,6 @@ defmodule MethodKnowWeb.ResourceLive.Index do
         resource={@resource}
         return_to={~p"/resources"}
         show_drawer={@show_drawer}
-        selected_tags={@selected_tags}
         tags={@tags}
         title={@form_title}
       />

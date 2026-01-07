@@ -21,6 +21,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   attr :all_tags, :list, required: true
   attr :current_scope, :any, required: true
   attr :current_user, :map, required: false
+  attr :filters, :map, default: %{tags: [], types: []}
   attr :form, :any, required: true
   attr :form_action, :atom, required: true
   attr :form_params, :map, required: false
@@ -30,7 +31,6 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   attr :resource, :map, required: true
   attr :return_to, :string, required: false
   attr :show_drawer, :boolean, required: true
-  attr :selected_tags, :list, required: false, default: []
   attr :tags, :list, required: true
   attr :title, :string, required: true
   @impl true
@@ -66,7 +66,11 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
           <header class="w-full">
             <%= if @form_action == :show do %>
               <div class="flex items-center justify-between pb-2">
-                <.resource_type_badge type={@resource.resource_type} />
+                <.resource_type_badge
+                  type={@resource.resource_type}
+                  active={@filters && @resource.resource_type in @filters.types}
+                  click="filter_type"
+                />
                 <div class="flex gap-2 pr-2">
                   <%= if @current_user && @resource.user_id == @current_user.id do %>
                     <button
@@ -114,7 +118,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
             <.resource_display
               resource={@resource}
               current_user={@current_user}
-              selected_tags={@tags}
+              filters={@filters}
             />
           <% else %>
             <.live_component
@@ -185,9 +189,9 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
     """
   end
 
-  attr :resource, :map, required: true
   attr :current_user, :map, required: true
-  attr :selected_tags, :list, default: nil
+  attr :filters, :map, default: %{tags: [], types: []}
+  attr :resource, :map, required: true
 
   def resource_display(assigns) do
     ~H"""
@@ -213,7 +217,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
         <%= for tag <- (@resource.tags || []) do %>
           <.tag_button
             tag={tag}
-            active={assigns[:selected_tags] && tag in assigns.selected_tags}
+            active={@filters && tag in @filters.tags}
             click="filter_tag"
           />
         <% end %>
