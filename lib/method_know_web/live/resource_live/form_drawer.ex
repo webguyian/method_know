@@ -238,6 +238,12 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
 
   @impl true
   def handle_event("esc_close", %{"key" => "Escape"}, socket) do
+    send_update(MethodKnowWeb.TagFilterComponent,
+      id: "tag-filter",
+      show_tag_dropdown: false,
+      tag_input: ""
+    )
+
     send(self(), :close_drawer)
     {:noreply, socket}
   end
@@ -247,6 +253,12 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
   end
 
   def handle_event("hide_form", _params, socket) do
+    send_update(MethodKnowWeb.TagFilterComponent,
+      id: "tag-filter",
+      show_tag_dropdown: false,
+      tag_input: ""
+    )
+
     send(self(), :close_drawer)
     {:noreply, socket}
   end

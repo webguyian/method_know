@@ -24,8 +24,6 @@ defmodule MethodKnowWeb.TagFilterComponent do
   attr :show_tag_dropdown, :boolean, default: false
   attr :tag_input, :string, default: ""
   attr :tags, :list, default: []
-
-  @spec render(any()) :: Phoenix.LiveView.Rendered.t()
   @impl true
   def render(assigns) do
     ~H"""
@@ -67,6 +65,7 @@ defmodule MethodKnowWeb.TagFilterComponent do
             autocomplete="off"
             phx-target={@myself}
             phx-focus="show_tag_dropdown"
+            phx-click-away="hide_tag_dropdown"
             phx-debounce="200"
           />
           <div
@@ -100,27 +99,28 @@ defmodule MethodKnowWeb.TagFilterComponent do
         </button>
       </form>
       <div class="mt-2 flex w-full">
-        <button
-          type="button"
-          class={[
-            "text-primary text-sm font-medium px-0 py-0 bg-transparent border-none hover:underline focus:underline focus:outline-none flex items-center gap-1",
-            @generating_tags && "opacity-60 cursor-wait pointer-events-none"
-          ]}
-          style="min-width: 0;"
-          phx-click="generate_tags"
-          phx-target={@myself}
-          disabled={@generating_tags}
-          id="generate-tags-btn"
-        >
-          <Lucide.sparkles class={[@generating_tags && "animate-spin", "size-4"]} />
-          <span>
-            <%= if @generating_tags do %>
-              Generating...
-            <% else %>
-              Generate tags
-            <% end %>
-          </span>
-        </button>
+        <%= if @resource.description && @resource.description != "" do %>
+          <button
+            type="button"
+            class={[
+              "text-primary text-sm font-medium px-0 py-0 bg-transparent border-none hover:underline focus:underline focus:outline-none flex items-center gap-1",
+              @generating_tags && "opacity-60 cursor-wait pointer-events-none"
+            ]}
+            phx-click="generate_tags"
+            phx-target={@myself}
+            disabled={@generating_tags}
+            id="generate-tags-btn"
+          >
+            <Lucide.sparkles class={[@generating_tags && "animate-spin", "size-4"]} />
+            <span>
+              <%= if @generating_tags do %>
+                Generating...
+              <% else %>
+                Generate tags
+              <% end %>
+            </span>
+          </button>
+        <% end %>
       </div>
     </div>
     """
