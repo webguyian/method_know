@@ -300,7 +300,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawer do
     resource = socket.assigns[:resource] || %Resource{}
     changeset = Resources.change_resource(socket.assigns.current_scope, resource, params)
 
-    {:noreply, assign(socket, form: to_form(changeset, action: :validate))}
+    {:noreply, assign(socket, form: to_form(changeset))}
   end
 
   defp normalize_tags(params) do
