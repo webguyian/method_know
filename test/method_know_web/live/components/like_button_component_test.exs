@@ -127,7 +127,7 @@ defmodule MethodKnowWeb.LikeButtonComponentTest do
 
     # Assert that the PubSub message was broadcast
     resource_id = resource.id
-    assert_received {:resource_liked, ^resource_id, 1}
+    assert_receive {:resource_liked, ^resource_id, 1}
   end
 
   test "broadcasts PubSub message on unlike", %{conn: conn, user: user, resource: resource} do
@@ -152,7 +152,7 @@ defmodule MethodKnowWeb.LikeButtonComponentTest do
 
     # Assert that the PubSub message was broadcast with 0 likes
     resource_id = resource.id
-    assert_received {:resource_liked, ^resource_id, 0}
+    assert_receive {:resource_liked, ^resource_id, 0}
     # Verify DB state
     refute Resources.liked_by_user?(resource.id, user.id)
   end

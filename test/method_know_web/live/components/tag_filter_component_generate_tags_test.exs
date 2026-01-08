@@ -24,7 +24,7 @@ defmodule MethodKnowWeb.TagFilterComponent.GenerateTagsTest do
        assign(socket,
          tags: [],
          all_tags: ["elixir", "phoenix"],
-         resource: %{body: "Elixir and Phoenix"},
+         resource: %{description: "Elixir and Phoenix"},
          generating_tags: false
        )}
     end

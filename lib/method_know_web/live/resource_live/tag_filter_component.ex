@@ -99,7 +99,7 @@ defmodule MethodKnowWeb.TagFilterComponent do
         </button>
       </form>
       <div class="mt-2 flex w-full">
-        <%= if @resource.description && @resource.description != "" do %>
+        <%= if Map.get(@resource, :description) not in [nil, ""] do %>
           <button
             type="button"
             class={[

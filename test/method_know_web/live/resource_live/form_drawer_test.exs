@@ -219,7 +219,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
         )
 
       view |> element("button[aria-label='Close']") |> render_click()
-      assert_received {:received, :close_drawer}
+      assert_receive {:received, :close_drawer}
     end
 
     test "closes drawer on Escape keyup", %{
@@ -241,7 +241,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
         )
 
       view |> element("div[phx-window-keyup='esc_close']") |> render_keyup(%{key: "Escape"})
-      assert_received {:received, :close_drawer}
+      assert_receive {:received, :close_drawer}
     end
 
     test "notifies parent on form validation", %{
@@ -266,7 +266,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       |> form("#resource-form", %{resource: %{title: "New Title"}})
       |> render_change()
 
-      assert_received {:received, {:form_params_updated, _params}}
+      assert_receive {:received, {:form_params_updated, _params}}
     end
 
     test "saves resource and notifies parent", %{
@@ -290,8 +290,8 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       |> form("#resource-form", %{resource: %{title: "Updated Title"}})
       |> render_submit()
 
-      assert_received {:received, {:resource_saved, :updated}}
-      assert_received {:received, :close_drawer}
+      assert_receive {:received, {:resource_saved, :updated}}
+      assert_receive {:received, :close_drawer}
     end
 
     test "navigates back to resource view from edit when from_drawer is true", %{
@@ -313,7 +313,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
         )
 
       view |> element("button", "Cancel") |> render_click()
-      assert_received {:received, {:show_resource, _id}}
+      assert_receive {:received, {:show_resource, _id}}
     end
 
     test "normalizes string tags on validation", %{
@@ -337,7 +337,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       |> element("#resource-form")
       |> render_change(%{"resource" => %{"tags" => "elixir, phoenix"}})
 
-      assert_received {:received, {:form_params_updated, params}}
+      assert_receive {:received, {:form_params_updated, params}}
       assert params["tags"] == ["elixir", "phoenix"]
     end
 
@@ -362,7 +362,7 @@ defmodule MethodKnowWeb.ResourceLive.FormDrawerTest do
       |> element("button", "Code Snippet")
       |> render_click()
 
-      assert_received {:received, {:form_params_updated, params}}
+      assert_receive {:received, {:form_params_updated, params}}
       assert params["resource_type"] == "code_snippet"
     end
 

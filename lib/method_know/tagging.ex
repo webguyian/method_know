@@ -12,7 +12,7 @@ defmodule MethodKnow.Tagging do
   """
   def start_tag_extraction(resource, liveview_pid) do
     Task.start(fn ->
-      tags = extract_tags(resource.description || "")
+      tags = extract_tags(Map.get(resource, :description) || "")
       send(liveview_pid, {:tags_generated, tags})
     end)
   end
