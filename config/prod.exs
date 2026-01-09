@@ -13,7 +13,7 @@ config :method_know, MethodKnowWeb.Endpoint,
 config :method_know, MethodKnowWeb.Endpoint,
   force_ssl: [hsts: true, rewrite_on: [:x_forwarded_proto]],
   server: true,
-  check_origin: ["//know.run.place"]
+  check_origin: ["//know.run.place", "//www.know.run.place", "https://know.run.place"]
 
 # Enable the production dashboard
 config :method_know, :prod_dashboard, true

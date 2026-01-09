@@ -10,6 +10,7 @@ defmodule MethodKnowWeb.Router do
     plug :put_root_layout, html: {MethodKnowWeb.Layouts, :root}
     plug :protect_from_forgery
     plug :put_secure_browser_headers
+    plug :put_no_cache_headers
     plug :fetch_current_scope_for_user
   end
 
@@ -94,5 +95,9 @@ defmodule MethodKnowWeb.Router do
     username = System.get_env("AUTH_USERNAME") || "admin"
     password = System.get_env("AUTH_PASSWORD") || "a-very-long-random-password@123!"
     Plug.BasicAuth.basic_auth(conn, username: username, password: password)
+  end
+
+  defp put_no_cache_headers(conn, _opts) do
+    Plug.Conn.put_resp_header(conn, "cache-control", "no-store, no-cache, must-revalidate")
   end
 end
